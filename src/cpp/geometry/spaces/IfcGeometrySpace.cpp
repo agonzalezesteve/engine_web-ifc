@@ -610,8 +610,8 @@ namespace webifc::geometry
             {
                 auto otherSecondLevelBoundary = secondLevelBoundaries[secondLevelBoundaryId + 1];
 
-                std::cout << secondLevelBoundary.id << ", " << secondLevelBoundary.buildingElement << ", " << secondLevelBoundary.space << ", " << secondLevelBoundary.IfcInternalOrExternalEnum() << std::endl;
-                std::cout << otherSecondLevelBoundary.id << ", " << otherSecondLevelBoundary.buildingElement << ", " << otherSecondLevelBoundary.space << ", " << otherSecondLevelBoundary.IfcInternalOrExternalEnum() << std::endl;
+                std::cout << secondLevelBoundary.id << ", " << secondLevelBoundary.buildingElement << ", " << secondLevelBoundary.space << ", " << secondLevelBoundary.boundaryConditionToString() << std::endl;
+                std::cout << otherSecondLevelBoundary.id << ", " << otherSecondLevelBoundary.buildingElement << ", " << otherSecondLevelBoundary.space << ", " << otherSecondLevelBoundary.boundaryConditionToString() << std::endl;
 
                 secondLevelBoundaryId += 2;
                 break;
@@ -620,13 +620,13 @@ namespace webifc::geometry
             {
                 if (spacesAndBuildings[secondLevelBoundary.space].isSpace)
                 {
-                    std::cout << secondLevelBoundary.id << ", " << secondLevelBoundary.buildingElement << ", " << secondLevelBoundary.space << ", " << secondLevelBoundary.IfcInternalOrExternalEnum() << std::endl;
+                    std::cout << secondLevelBoundary.id << ", " << secondLevelBoundary.buildingElement << ", " << secondLevelBoundary.space << ", " << secondLevelBoundary.boundaryConditionToString() << std::endl;
                 }
 
                 auto otherSecondLevelBoundary = secondLevelBoundaries[secondLevelBoundaryId + 1];
                 if (spacesAndBuildings[otherSecondLevelBoundary.space].isSpace)
                 {
-                    std::cout << otherSecondLevelBoundary.id << ", " << otherSecondLevelBoundary.buildingElement << ", " << otherSecondLevelBoundary.space << ", " << otherSecondLevelBoundary.IfcInternalOrExternalEnum() << std::endl;
+                    std::cout << otherSecondLevelBoundary.id << ", " << otherSecondLevelBoundary.buildingElement << ", " << otherSecondLevelBoundary.space << ", " << otherSecondLevelBoundary.boundaryConditionToString() << std::endl;
                 }
 
                 secondLevelBoundaryId += 2;
@@ -636,7 +636,7 @@ namespace webifc::geometry
             {
                 if (spacesAndBuildings[secondLevelBoundary.space].isSpace)
                 {
-                    std::cout << secondLevelBoundary.id << ", " << secondLevelBoundary.buildingElement << ", " << secondLevelBoundary.space << ", " << secondLevelBoundary.IfcInternalOrExternalEnum() << std::endl;
+                    std::cout << secondLevelBoundary.id << ", " << secondLevelBoundary.buildingElement << ", " << secondLevelBoundary.space << ", " << secondLevelBoundary.boundaryConditionToString() << std::endl;
                 }
 
                 secondLevelBoundaryId += 1;
