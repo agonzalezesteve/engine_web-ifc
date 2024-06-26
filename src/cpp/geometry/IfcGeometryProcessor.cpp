@@ -1514,7 +1514,7 @@ namespace webifc::geometry
 
                     if (op == "DIFFERENCE")
                     {
-                        result = fuzzybools::Subtract(result, secondOperator);
+                        result = fuzzybools::Difference(result, secondOperator);
                     }
                     else if (op == "UNION")
                     {
