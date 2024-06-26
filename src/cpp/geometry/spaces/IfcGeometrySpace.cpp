@@ -7,7 +7,7 @@
 namespace webifc::geometry
 {
 
-    std::vector<SpaceOrBuilding> IfcGeometrySpace::GetSpacesAndBuildings(const Geometry &unionGeom)
+    std::vector<SpaceOrBuilding> IfcGeometrySpace::GetSpacesAndBuildings(const fuzzybools::Geometry &unionGeom)
     {
         std::vector<SpaceOrBuilding> spacesAndBuildings;
 
@@ -21,7 +21,7 @@ namespace webifc::geometry
             if (visited[triangleId])
                 continue;
 
-            Geometry spaceOrBuildingGeom;
+            fuzzybools::Geometry spaceOrBuildingGeom;
             std::queue<size_t> q;
             q.push(triangleId);
 
@@ -64,7 +64,7 @@ namespace webifc::geometry
         return spacesAndBuildings;
     }
 
-    std::pair<Geometry, Geometry> IfcGeometrySpace::SplitFirstBoundaryInIntersectionAndDifference(const Geometry &A, const Geometry &B)
+    std::pair<fuzzybools::Geometry, fuzzybools::Geometry> IfcGeometrySpace::SplitFirstBoundaryInIntersectionAndDifference(const fuzzybools::Geometry &A, const fuzzybools::Geometry &B)
     {
         fuzzybools::SharedPosition sp;
         sp.Construct(A, B);
@@ -78,9 +78,9 @@ namespace webifc::geometry
         return {firstBoundarySplitted.first, firstBoundarySplitted.second.first};
     }
 
-    std::vector<Geometry> IfcGeometrySpace::SplitGeometryByContiguousAndCoplanarFaces(const Geometry &geom)
+    std::vector<fuzzybools::Geometry> IfcGeometrySpace::SplitGeometryByContiguousAndCoplanarFaces(const fuzzybools::Geometry &geom)
     {
-        std::vector<Geometry> newGeoms;
+        std::vector<fuzzybools::Geometry> newGeoms;
         if (geom.IsEmpty())
             return newGeoms;
 
@@ -94,7 +94,7 @@ namespace webifc::geometry
             if (visited[triangleId])
                 continue;
 
-            Geometry newGeom;
+            fuzzybools::Geometry newGeom;
             std::queue<size_t> q;
             q.push(triangleId);
 
@@ -220,7 +220,7 @@ namespace webifc::geometry
         }
     }
 
-    Geometry IfcGeometrySpace::IntersectFirstBoundaryWithSecondGeometry(const Geometry &A, const Geometry &B)
+    fuzzybools::Geometry IfcGeometrySpace::IntersectFirstBoundaryWithSecondGeometry(const fuzzybools::Geometry &A, const fuzzybools::Geometry &B)
     {
         fuzzybools::SharedPosition sp;
         sp.Construct(A, B);
@@ -462,7 +462,7 @@ namespace webifc::geometry
         return glm::cross(B - A, C - A);
     }
 
-    std::vector<std::pair<std::vector<glm::dvec3>, std::vector<std::vector<size_t>>>> IfcGeometrySpace::SplitGeometryInPolygons(const Geometry &A)
+    std::vector<std::pair<std::vector<glm::dvec3>, std::vector<std::vector<size_t>>>> IfcGeometrySpace::SplitGeometryInPolygons(const fuzzybools::Geometry &A)
     {
         std::vector<std::pair<std::vector<glm::dvec3>, std::vector<std::vector<size_t>>>> polygons;
 
@@ -552,7 +552,7 @@ namespace webifc::geometry
 
     void IfcGeometrySpace::GetSpacesGeomsByBuildingElements(std::vector<BuildingElement> &buildingElements)
     {
-        Geometry unionGeom;
+        fuzzybools::Geometry unionGeom;
         for (size_t buildingElementId = 0; buildingElementId < buildingElements.size(); buildingElementId++)
         {
             auto buildingElement = buildingElements[buildingElementId];
