@@ -14,7 +14,7 @@ namespace webifc::geometry
         fuzzybools::SharedPosition sp;
         sp.AddGeometryA(unionGeom);
 
-        std::vector<Triangle> geomTriangles = sp.A.triangles;
+        std::vector<fuzzybools::Triangle> geomTriangles = sp.A.triangles;
         std::vector<bool> visited(geomTriangles.size(), false);
         for (size_t triangleId = 0; triangleId < geomTriangles.size(); triangleId++)
         {
@@ -34,7 +34,7 @@ namespace webifc::geometry
 
                 visited[currentId] = true;
 
-                Triangle triangle = geomTriangles[currentId];
+                fuzzybools::Triangle triangle = geomTriangles[currentId];
                 glm::dvec3 a = sp.points[triangle.a].location3D;
                 glm::dvec3 b = sp.points[triangle.b].location3D;
                 glm::dvec3 c = sp.points[triangle.c].location3D;
@@ -87,7 +87,7 @@ namespace webifc::geometry
         fuzzybools::SharedPosition sp;
         sp.AddGeometryA(geom);
 
-        std::vector<Triangle> geomTriangles = sp.A.triangles;
+        std::vector<fuzzybools::Triangle> geomTriangles = sp.A.triangles;
         std::vector<bool> visited(geomTriangles.size(), false);
         for (size_t triangleId = 0; triangleId < geomTriangles.size(); triangleId++)
         {
@@ -107,7 +107,7 @@ namespace webifc::geometry
 
                 visited[currentId] = true;
 
-                Triangle triangle = geomTriangles[currentId];
+                fuzzybools::Triangle triangle = geomTriangles[currentId];
                 glm::dvec3 norm = sp.GetNormal(triangle);
 
                 glm::dvec3 a = sp.points[triangle.a].location3D;
@@ -155,12 +155,12 @@ namespace webifc::geometry
                 auto intersectionAndDifferenceGeoms = SplitFirstBoundaryInIntersectionAndDifference(geom, buildingElement.geometry);
                 for (auto firstLevelBoundaryGeom : SplitGeometryByContiguousAndCoplanarFaces(intersectionAndDifferenceGeoms.first))
                 {
-                    Face tri = firstLevelBoundaryGeom.GetFace(0);
+                    fuzzybools::Face tri = firstLevelBoundaryGeom.GetFace(0);
                     auto a = firstLevelBoundaryGeom.GetPoint(tri.i0);
                     auto b = firstLevelBoundaryGeom.GetPoint(tri.i1);
                     auto c = firstLevelBoundaryGeom.GetPoint(tri.i2);
                     glm::dvec3 norm;
-                    computeSafeNormal(a, b, c, norm, EPS_SMALL);
+                    fuzzybools::computeSafeNormal(a, b, c, norm, EPS_SMALL);
 
                     FirstLevelBoundary firstLevelBoundary;
                     firstLevelBoundary.id = firstLevelBoundaries.size();
@@ -536,7 +536,7 @@ namespace webifc::geometry
 
                 if (polygon.second.size() > 1)
                 {
-                    auto comparator = [polygon](std::vector<size_t> a, std::vector<size_t> b)
+                    auto comparator = [this, &polygon](std::vector<size_t> a, std::vector<size_t> b)
                     {
                         return WireArea(a, polygon.first) > WireArea(b, polygon.first);
                     };

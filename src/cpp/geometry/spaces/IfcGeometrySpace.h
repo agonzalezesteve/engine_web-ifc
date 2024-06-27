@@ -5,8 +5,11 @@
 #pragma once
 
 #include <fuzzy/geometry.h>
+#include <fuzzy/shared-position.h>
+#include <fuzzy/fuzzy-bools.h>
 #include <vector>
 #include <string>
+#include <queue>
 #include <glm/vec3.hpp>
 
 namespace webifc::geometry
