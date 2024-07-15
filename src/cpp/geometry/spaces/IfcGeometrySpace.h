@@ -73,10 +73,9 @@ namespace webifc::geometry
 	class IfcGeometrySpace
 	{
 	public:
-		void GetSpacesGeomsByBuildingElements(std::vector<BuildingElement> &buildingElements);
+		std::vector<SpaceOrBuilding> GetSpacesAndBuildings(const fuzzybools::Geometry &unionGeom);
 
 	private:
-		std::vector<SpaceOrBuilding> GetSpacesAndBuildings(const fuzzybools::Geometry &unionGeom);
 		std::pair<fuzzybools::Geometry, fuzzybools::Geometry> SplitFirstBoundaryInIntersectionAndDifference(const fuzzybools::Geometry &A, const fuzzybools::Geometry &B);
 		std::vector<fuzzybools::Geometry> SplitGeometryByContiguousAndCoplanarFaces(const fuzzybools::Geometry &geom);
 		std::vector<FirstLevelBoundary> GetFirstLevelBoundaries(std::vector<BuildingElement> &buildingElements, const std::vector<SpaceOrBuilding> &spaceAndBuildings);

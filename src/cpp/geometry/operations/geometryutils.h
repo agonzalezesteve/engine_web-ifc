@@ -1045,8 +1045,6 @@ namespace webifc::geometry
 		{
 			glm::dmat4 newMat = mat * mesh.transformation;
 
-			bool transformationBreaksWinding = MatrixFlipsTriangles(newMat);
-
 			auto geomIt = geometryMap.find(mesh.expressID);
 
 			if (geomIt != geometryMap.end())
@@ -1058,35 +1056,10 @@ namespace webifc::geometry
 					for (uint32_t i = 0; i < meshGeom.part.size(); i++)
 					{
 
-						IfcGeometry newMeshGeom = meshGeom.part[i];
-						if (newMeshGeom.numFaces)
+						IfcGeometry meshGeomPart = meshGeom.part[i];
+						if (meshGeomPart.numFaces)
 						{
-							IfcGeometry newGeom;
-							newGeom.halfSpace = newMeshGeom.halfSpace;
-							if (newGeom.halfSpace)
-							{
-								newGeom.halfSpaceOrigin = newMat * glm::dvec4(newMeshGeom.halfSpaceOrigin, 1);
-								newGeom.halfSpaceX = newMat * glm::dvec4(newMeshGeom.halfSpaceX, 1);
-								newGeom.halfSpaceY = newMat * glm::dvec4(newMeshGeom.halfSpaceY, 1);
-								newGeom.halfSpaceZ = newMat * glm::dvec4(newMeshGeom.halfSpaceZ, 1);
-							}
-							
-							for (uint32_t i = 0; i < newMeshGeom.numFaces; i++)
-							{
-								fuzzybools::Face f = newMeshGeom.GetFace(i);
-								glm::dvec3 a = newMat * glm::dvec4(newMeshGeom.GetPoint(f.i0), 1);
-								glm::dvec3 b = newMat * glm::dvec4(newMeshGeom.GetPoint(f.i1), 1);
-								glm::dvec3 c = newMat * glm::dvec4(newMeshGeom.GetPoint(f.i2), 1);
-
-								if (transformationBreaksWinding)
-								{
-									newGeom.AddFace(b, a, c);
-								}
-								else
-								{
-									newGeom.AddFace(a, b, c);
-								}
-							}
+							IfcGeometry newGeom = meshGeomPart.Transform(newMat);
 
 							geoms.push_back(newGeom);
 						}
@@ -1096,32 +1069,7 @@ namespace webifc::geometry
 				{
 					if (meshGeom.numFaces)
 					{
-						IfcGeometry newGeom;
-						newGeom.halfSpace = meshGeom.halfSpace;
-						if (newGeom.halfSpace)
-						{
-							newGeom.halfSpaceOrigin = newMat * glm::dvec4(meshGeom.halfSpaceOrigin, 1);
-							newGeom.halfSpaceX = newMat * glm::dvec4(meshGeom.halfSpaceX, 1);
-							newGeom.halfSpaceY = newMat * glm::dvec4(meshGeom.halfSpaceY, 1);
-							newGeom.halfSpaceZ = newMat * glm::dvec4(meshGeom.halfSpaceZ, 1);
-						}
-						
-						for (uint32_t i = 0; i < meshGeom.numFaces; i++)
-						{
-							fuzzybools::Face f = meshGeom.GetFace(i);
-							glm::dvec3 a = newMat * glm::dvec4(meshGeom.GetPoint(f.i0), 1);
-							glm::dvec3 b = newMat * glm::dvec4(meshGeom.GetPoint(f.i1), 1);
-							glm::dvec3 c = newMat * glm::dvec4(meshGeom.GetPoint(f.i2), 1);
-
-							if (transformationBreaksWinding)
-							{
-								newGeom.AddFace(b, a, c);
-							}
-							else
-							{
-								newGeom.AddFace(a, b, c);
-							}
-						}
+						IfcGeometry newGeom = meshGeom.Transform(newMat);;
 
 						geoms.push_back(newGeom);
 					}

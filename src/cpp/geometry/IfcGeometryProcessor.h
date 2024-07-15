@@ -11,6 +11,7 @@
 #include "../parsing/IfcLoader.h"
 #include "../schema/IfcSchemaManager.h"
 #include "IfcGeometryLoader.h"
+#include <emscripten/bind.h>
 
 namespace fuzzybools
 {
@@ -28,8 +29,8 @@ namespace webifc::geometry
         IfcGeometryProcessor(const webifc::parsing::IfcLoader &loader,const webifc::schema::IfcSchemaManager &schemaManager,uint16_t circleSegments,bool coordinateToOrigin);
         IfcGeometry &GetGeometry(uint32_t expressID);
         IfcGeometryLoader GetLoader() const;
-        IfcFlatMesh GetFlatMesh(uint32_t expressID);
-        IfcComposedMesh GetMesh(uint32_t expressID, uint32_t nestLevel = 0);
+        IfcFlatMesh GetFlatMesh(uint32_t expressID, bool disableOpeningSubtractions = false);
+        IfcComposedMesh GetMesh(uint32_t expressID, bool disableOpeningSubtractions = false, uint32_t nestLevel = 0);
         void SetTransformation(const std::array<double, 16> &val);
         std::array<double, 16> GetFlatCoordinationMatrix() const;
         glm::dmat4 GetCoordinationMatrix() const;

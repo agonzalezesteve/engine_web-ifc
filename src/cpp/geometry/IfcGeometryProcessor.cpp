@@ -15,6 +15,7 @@
 #include "operations/curve-utils.h"
 #include "operations/mesh_utils.h"
 #include <fuzzy/fuzzy-bools.h>
+#include <emscripten/bind.h>
 
 namespace webifc::geometry
 {
@@ -72,9 +73,9 @@ namespace webifc::geometry
         return _coordinationMatrix;
     }
 
-    IfcComposedMesh IfcGeometryProcessor::GetMesh(uint32_t expressID, uint32_t nestLevel)
+    IfcComposedMesh IfcGeometryProcessor::GetMesh(uint32_t expressID, bool disableOpeningSubtractions, uint32_t nestLevel)
     {
-        spdlog::debug("[GetMesh({})]",expressID);
+        spdlog::debug("[GetMesh({})]", expressID);
         auto lineType = _loader.GetLineType(expressID);
 
         std::optional<glm::dvec4> styledItemColor;
@@ -158,7 +159,12 @@ namespace webifc::geometry
 
             if (ifcPresentation != 0 && _loader.IsValidExpressID(ifcPresentation))
             {
-                mesh.children.push_back(GetMesh(ifcPresentation));
+                mesh.children.push_back(GetMesh(ifcPresentation, disableOpeningSubtractions));
+            }
+
+            if (disableOpeningSubtractions)
+            {
+                return mesh;
             }
 
             auto relVoidsIt = relVoids.find(expressID);
@@ -207,10 +213,10 @@ namespace webifc::geometry
                     }
 
                     finalGeometry = BoolProcess(flatElementMeshes, voidGeoms, "DIFFERENCE");
-                    
-                    #ifdef CSG_DEBUG_OUTPUT
-                        io::DumpIfcGeometry(finalGeometry, "mesh_bool.obj");
-                    #endif
+
+#ifdef CSG_DEBUG_OUTPUT
+                    io::DumpIfcGeometry(finalGeometry, "mesh_bool.obj");
+#endif
                 }
 
                 _expressIDToGeometry[expressID] = finalGeometry;
@@ -239,7 +245,6 @@ namespace webifc::geometry
             {
                 return mesh;
             }
-            
         }
         else
         {
@@ -271,7 +276,7 @@ namespace webifc::geometry
                 uint32_t localPlacement = _loader.GetRefArgument();
 
                 mesh.transformation = _geometryLoader.GetLocalPlacement(localPlacement);
-                mesh.children.push_back(GetMesh(ifcPresentation));
+                mesh.children.push_back(GetMesh(ifcPresentation, disableOpeningSubtractions));
 
                 return mesh;
             }
@@ -281,8 +286,8 @@ namespace webifc::geometry
                 uint32_t firstOperandID = _loader.GetRefArgument();
                 uint32_t secondOperandID = _loader.GetRefArgument();
 
-                auto firstMesh = GetMesh(firstOperandID);
-                auto secondMesh = GetMesh(secondOperandID);
+                auto firstMesh = GetMesh(firstOperandID, disableOpeningSubtractions);
+                auto secondMesh = GetMesh(secondOperandID, disableOpeningSubtractions);
 
                 auto origin = GetOrigin(firstMesh, _expressIDToGeometry);
                 auto normalizeMat = glm::translate(-origin);
@@ -313,7 +318,7 @@ namespace webifc::geometry
 
                 if (op != "DIFFERENCE" && op != "UNION")
                 {
-                   spdlog::error("[GetMesh()] Unsupported boolean op {}",std::string(op), expressID);
+                    spdlog::error("[GetMesh()] Unsupported boolean op {}", std::string(op), expressID);
                     return mesh;
                 }
 
@@ -322,13 +327,13 @@ namespace webifc::geometry
 
                 uint32_t nestLevel2 = nestLevel + 1;
 
-                if(nestLevel > 20)
+                if (nestLevel > 20)
                 {
                     return mesh;
                 }
 
-                auto firstMesh = GetMesh(firstOperandID, nestLevel2);
-                auto secondMesh = GetMesh(secondOperandID, nestLevel2);
+                auto firstMesh = GetMesh(firstOperandID, disableOpeningSubtractions, nestLevel2);
+                auto secondMesh = GetMesh(secondOperandID, disableOpeningSubtractions, nestLevel2);
 
                 auto origin = GetOrigin(firstMesh, _expressIDToGeometry);
                 auto normalizeMat = glm::translate(-origin);
@@ -477,7 +482,7 @@ namespace webifc::geometry
                 uint32_t ifcPresentation = _loader.GetRefArgument();
 
                 mesh.transformation = _geometryLoader.GetLocalPlacement(axis2Placement);
-                mesh.children.push_back(GetMesh(ifcPresentation));
+                mesh.children.push_back(GetMesh(ifcPresentation, disableOpeningSubtractions));
 
                 return mesh;
             }
@@ -529,7 +534,7 @@ namespace webifc::geometry
                 for (auto &repToken : representations)
                 {
                     uint32_t repID = _loader.GetRefArgument(repToken);
-                    mesh.children.push_back(GetMesh(repID));
+                    mesh.children.push_back(GetMesh(repID, disableOpeningSubtractions));
                 }
 
                 return mesh;
@@ -545,7 +550,7 @@ namespace webifc::geometry
                 for (auto &repToken : repItems)
                 {
                     uint32_t repID = _loader.GetRefArgument(repToken);
-                    mesh.children.push_back(GetMesh(repID));
+                    mesh.children.push_back(GetMesh(repID, disableOpeningSubtractions));
                 }
 
                 return mesh;
@@ -780,7 +785,7 @@ namespace webifc::geometry
                 glm::dvec3 pos = _geometryLoader.GetAxis1Placement(axis1PlacementID)[1];
 
                 IfcCurve directrix = BuildArc(_geometryLoader.GetLinearScalingFactor(), pos, axis, angle, _circleSegments);
-                if(glm::distance(directrix.points[0], directrix.points[directrix.points.size() - 1]) < EPS_BIG)
+                if (glm::distance(directrix.points[0], directrix.points[directrix.points.size() - 1]) < EPS_BIG)
                 {
                     closed = true;
                 }
@@ -909,7 +914,7 @@ namespace webifc::geometry
                 for (auto &item : items)
                 {
                     uint32_t itemID = _loader.GetRefArgument(item);
-                    mesh.children.push_back(GetMesh(itemID));
+                    mesh.children.push_back(GetMesh(itemID, disableOpeningSubtractions));
                 }
 
                 return mesh;
@@ -930,7 +935,7 @@ namespace webifc::geometry
 
     IfcSurface IfcGeometryProcessor::GetSurface(uint32_t expressID)
     {
-        spdlog::debug("[GetSurface({})]",expressID);
+        spdlog::debug("[GetSurface({})]", expressID);
         auto lineType = _loader.GetLineType(expressID);
 
         // TODO: IfcSweptSurface and IfcBSplineSurface still missing
@@ -1367,13 +1372,13 @@ namespace webifc::geometry
         return IfcSurface();
     }
 
-    IfcFlatMesh IfcGeometryProcessor::GetFlatMesh(uint32_t expressID)
+    IfcFlatMesh IfcGeometryProcessor::GetFlatMesh(uint32_t expressID, bool disableOpeningSubtractions)
     {
-        spdlog::debug("[GetFlatMesh({})]",expressID);
+        spdlog::debug("[GetFlatMesh({})]", expressID);
         IfcFlatMesh flatMesh;
         flatMesh.expressID = expressID;
 
-        IfcComposedMesh composedMesh = GetMesh(expressID);
+        IfcComposedMesh composedMesh = GetMesh(expressID, disableOpeningSubtractions);
 
         glm::dmat4 mat = glm::scale(glm::dvec3(_geometryLoader.GetLinearScalingFactor()));
 
@@ -1384,7 +1389,7 @@ namespace webifc::geometry
 
     void IfcGeometryProcessor::AddComposedMeshToFlatMesh(IfcFlatMesh &flatMesh, const IfcComposedMesh &composedMesh, const glm::dmat4 &parentMatrix, const glm::dvec4 &color, bool hasColor)
     {
-       
+
         glm::dvec4 newParentColor = color;
         bool newHasColor = hasColor;
         glm::dmat4 newMatrix = parentMatrix * composedMesh.transformation;
@@ -1408,9 +1413,9 @@ namespace webifc::geometry
                 _isCoordinated = true;
             }
 
-     
             auto geom = _expressIDToGeometry[composedMesh.expressID];
-            if (geometry.testReverse()) geom.ReverseFaces();
+            if (geometry.testReverse())
+                geom.ReverseFaces();
 
             auto translation = glm::dmat4(1.0);
 
@@ -1435,7 +1440,9 @@ namespace webifc::geometry
             geometry.geometryExpressID = composedMesh.expressID;
 
             flatMesh.geometries.push_back(geometry);
-        } else if (composedMesh.hasColor) {
+        }
+        else if (composedMesh.hasColor)
+        {
             newParentColor = composedMesh.color;
             newHasColor = composedMesh.hasColor;
         }
@@ -1489,8 +1496,7 @@ namespace webifc::geometry
                             glm::dvec4(x, 0),
                             glm::dvec4(y, 0),
                             glm::dvec4(z, 0),
-                            glm::dvec4(0, 0, 0, 1)
-                        );
+                            glm::dvec4(0, 0, 0, 1));
 
                         double scaleX = 1;
                         double scaleY = 1;
@@ -1503,12 +1509,23 @@ namespace webifc::geometry
                             double dx = glm::dot(vec, x);
                             double dy = glm::dot(vec, y);
                             double dz = glm::dot(vec, z);
-                            if (glm::abs(dx) > scaleX) {scaleX = glm::abs(dx); }
-                            if (glm::abs(dy) > scaleY) {scaleY = glm::abs(dy); }
-                            if (glm::abs(dz) > scaleZ) {scaleZ = glm::abs(dz); }
+                            if (glm::abs(dx) > scaleX)
+                            {
+                                scaleX = glm::abs(dx);
+                            }
+                            if (glm::abs(dy) > scaleY)
+                            {
+                                scaleY = glm::abs(dy);
+                            }
+                            if (glm::abs(dz) > scaleZ)
+                            {
+                                scaleZ = glm::abs(dz);
+                            }
                         }
                         secondOperator.AddGeometry(secondGeom, trans, scaleX * 2, scaleY * 2, scaleZ * 2, secondGeom.halfSpaceOrigin);
-                    } else {
+                    }
+                    else
+                    {
                         secondOperator = secondGeom;
                     }
 
@@ -1550,8 +1567,8 @@ namespace webifc::geometry
 
     void IfcGeometryProcessor::ReadIndexedPolygonalFace(uint32_t expressID, std::vector<IfcBound3D> &bounds, const std::vector<glm::dvec3> &points)
     {
-        
-        spdlog::debug("[ReadIndexedPolygonalFace({})]",expressID);
+
+        spdlog::debug("[ReadIndexedPolygonalFace({})]", expressID);
         auto lineType = _loader.GetLineType(expressID);
 
         bounds.emplace_back();
@@ -1612,7 +1629,7 @@ namespace webifc::geometry
 
     IfcGeometry IfcGeometryProcessor::GetBrep(uint32_t expressID)
     {
-        spdlog::debug("[GetBrep({})]",expressID);
+        spdlog::debug("[GetBrep({})]", expressID);
         auto lineType = _loader.GetLineType(expressID);
         switch (lineType)
         {
@@ -1642,7 +1659,7 @@ namespace webifc::geometry
 
     void IfcGeometryProcessor::AddFaceToGeometry(uint32_t expressID, IfcGeometry &geometry)
     {
-        spdlog::debug("[AddFaceToGeometry({})]",expressID);
+        spdlog::debug("[AddFaceToGeometry({})]", expressID);
         auto lineType = _loader.GetLineType(expressID);
 
         switch (lineType)

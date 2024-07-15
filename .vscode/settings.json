@@ -99,7 +99,10 @@
     "ranges": "cpp",
     "__locale": "cpp",
     "__hash_table": "cpp",
-    "__tree": "cpp"
+    "__tree": "cpp",
+    "cfenv": "cpp",
+    "numbers": "cpp",
+    "semaphore": "cpp"
   },
   "cmake.configureOnOpen": true,
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",

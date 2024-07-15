@@ -73,7 +73,7 @@ Message("Downloading FUZZY")
 # FetchContent_Declare(fuzzy GIT_REPOSITORY "https://github.com/tomvandig/fuzzy-bools" GIT_TAG "a52c0f0c0667b7c875ae44e91e63a33c1813be64" SOURCE_SUBDIR "../")
 # FetchContent_Declare(fuzzy GIT_REPOSITORY "https://github.com/QuimMoya/fuzzy-bools" GIT_TAG "9e97b0872dd4ed94060dfea7aa9235d80ee6a7ca" SOURCE_SUBDIR "../")
 # @pobr1 Improvement
-FetchContent_Declare(fuzzy GIT_REPOSITORY "https://github.com/agonzalezesteve/fuzzy-bools" GIT_TAG "367c1cd72626d5c3d67e809689ece9fe8f6f0598" SOURCE_SUBDIR "../")
+FetchContent_Declare(fuzzy GIT_REPOSITORY "https://github.com/agonzalezesteve/fuzzy-bools" GIT_TAG "68b6bb1db0973321e6140e0056f8d75bb418aeb8" SOURCE_SUBDIR "../")
 FetchContent_MakeAvailable(fuzzy)
 FetchContent_GetProperties(fuzzy)
 file (RENAME ${fuzzy_SOURCE_DIR}/src ${fuzzy_SOURCE_DIR}/fuzzy RESULT result) # specifying 'result' continues even if rename was already performed
