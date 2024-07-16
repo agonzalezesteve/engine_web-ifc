@@ -14,12 +14,13 @@
 
 #include "geometry.h"
 
-namespace webifc::geometry {
+namespace webifc::geometry
+{
 
 	struct IfcGeometry : fuzzybools::Geometry
 	{
 		bool halfSpace = false;
-		std::vector<IfcGeometry>  part;
+		std::vector<IfcGeometry> part;
 		glm::dvec3 halfSpaceX = glm::dvec3(1, 0, 0);
 		glm::dvec3 halfSpaceY = glm::dvec3(0, 1, 0);
 		glm::dvec3 halfSpaceZ = glm::dvec3(0, 0, 1);
@@ -35,10 +36,11 @@ namespace webifc::geometry {
 		uint32_t GetIndexData();
 		uint32_t GetIndexDataSize();
 		glm::dmat4 Normalize();
-		private:
-			void ReverseFace(uint32_t index);
-			bool normalized = false;
+		IfcGeometry Transform(glm::dmat4 transformation);
 
+	private:
+		void ReverseFace(uint32_t index);
+		bool normalized = false;
 	};
 
 }

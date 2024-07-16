@@ -957,6 +957,17 @@ export class IfcAPI {
     }
 
 	/**
+	 * Find spaces mesh of a model
+	 * @param modelID Model handle retrieved by OpenModel
+	 * @param types types of elements to stream
+	 * @param geometryCallback callback function that is called for each space mesh
+	 * @param msgCallback msgCallback
+	 */
+    FindSpacesMesh(modelID: number, types: Array<number>, geometryCallback: (geometry: IfcGeometry, index:number, total:number) => void, msgCallback: (msg: string) => void) {
+        this.wasmModule.FindSpacesMesh(modelID, types, geometryCallback, msgCallback);
+    }
+
+	/**
 	 * Streams all meshes of a model with a specific ifc type
 	 * @param modelID Model handle retrieved by OpenModel
 	 * @param types types of elements to stream

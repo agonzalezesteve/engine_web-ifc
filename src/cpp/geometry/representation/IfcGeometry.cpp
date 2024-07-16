@@ -1,20 +1,20 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
-* License, v. 2.0. If a copy of the MPL was not distributed with this
-* file, You can obtain one at https://mozilla.org/MPL/2.0/.  */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.  */
 
 // Implementation for IfcGeometry
 
 #include "IfcGeometry.h"
 
-namespace webifc::geometry {
-
+namespace webifc::geometry
+{
 
 	void IfcGeometry::ReverseFace(uint32_t index)
 	{
-			fuzzybools::Face f = GetFace(index);
-			indexData[index * 3 + 0] = f.i2;
-			indexData[index * 3 + 1] = f.i1;
-			indexData[index * 3 + 2] = f.i0;
+		fuzzybools::Face f = GetFace(index);
+		indexData[index * 3 + 0] = f.i2;
+		indexData[index * 3 + 1] = f.i1;
+		indexData[index * 3 + 2] = f.i0;
 	}
 
 	void IfcGeometry::ReverseFaces()
@@ -29,9 +29,9 @@ namespace webifc::geometry {
 	{
 		glm::dvec3 center = normalizationCenter;
 		if (!normalized)
-		{	
+		{
 			glm::dvec3 extents;
-			GetCenterExtents(center,extents);
+			GetCenterExtents(center, extents);
 			for (size_t i = 0; i < vertexData.size(); i += 6)
 			{
 				vertexData[i + 0] = vertexData[i + 0] - center.x;
@@ -46,7 +46,7 @@ namespace webifc::geometry {
 		resultMat[3][1] = center[1];
 		resultMat[3][2] = center[2];
 
-		return  resultMat;
+		return resultMat;
 	}
 
 	uint32_t IfcGeometry::GetVertexData()
@@ -58,7 +58,7 @@ namespace webifc::geometry {
 			for (size_t i = 0; i < vertexData.size(); i++)
 			{
 				// The vector was previously copied in batches of 6, but
-				// copying single entry at a time is more resilient if the 
+				// copying single entry at a time is more resilient if the
 				// underlying geometry lib changes the treatment of normals
 				fvertexData[i] = vertexData[i];
 			}
@@ -90,20 +90,20 @@ namespace webifc::geometry {
 			glm::dvec3 a = geom.GetPoint(f.i0);
 			glm::dvec3 b = geom.GetPoint(f.i1);
 			glm::dvec3 c = geom.GetPoint(f.i2);
-			if(scx != 1 || scy != 1 || scz != 1)
+			if (scx != 1 || scy != 1 || scz != 1)
 			{
 				double aax = glm::dot(trans[0], glm::dvec4(a - origin, 1)) * scx;
 				double aay = glm::dot(trans[1], glm::dvec4(a - origin, 1)) * scy;
 				double aaz = glm::dot(trans[2], glm::dvec4(a - origin, 1)) * scz;
-				a = origin + glm::dvec3(aax *  trans[0]) + glm::dvec3(aay * trans[1]) + glm::dvec3(aaz * trans[2]);
+				a = origin + glm::dvec3(aax * trans[0]) + glm::dvec3(aay * trans[1]) + glm::dvec3(aaz * trans[2]);
 				double bbx = glm::dot(trans[0], glm::dvec4(b - origin, 1)) * scx;
 				double bby = glm::dot(trans[1], glm::dvec4(b - origin, 1)) * scy;
 				double bbz = glm::dot(trans[2], glm::dvec4(b - origin, 1)) * scz;
-				b = origin + glm::dvec3(bbx *  trans[0]) + glm::dvec3(bby * trans[1]) + glm::dvec3(bbz * trans[2]);
+				b = origin + glm::dvec3(bbx * trans[0]) + glm::dvec3(bby * trans[1]) + glm::dvec3(bbz * trans[2]);
 				double ccx = glm::dot(trans[0], glm::dvec4(c - origin, 1)) * scx;
 				double ccy = glm::dot(trans[1], glm::dvec4(c - origin, 1)) * scy;
 				double ccz = glm::dot(trans[2], glm::dvec4(c - origin, 1)) * scz;
-				c = origin + glm::dvec3(ccx *  trans[0]) + glm::dvec3(ccy * trans[1]) + glm::dvec3(ccz * trans[2]);
+				c = origin + glm::dvec3(ccx * trans[0]) + glm::dvec3(ccy * trans[1]) + glm::dvec3(ccz * trans[2]);
 			}
 			AddFace(a, b, c);
 		}
@@ -137,4 +137,38 @@ namespace webifc::geometry {
 		return (uint32_t)indexData.size();
 	}
 
+	IfcGeometry IfcGeometry::Transform(glm::dmat4 transformation)
+	{
+		IfcGeometry newGeom;
+
+		bool transformationBreaksWinding = glm::determinant(transformation) < 0;
+
+		newGeom.halfSpace = halfSpace;
+		if (newGeom.halfSpace)
+		{
+			newGeom.halfSpaceOrigin = transformation * glm::dvec4(halfSpaceOrigin, 1);
+			newGeom.halfSpaceX = transformation * glm::dvec4(halfSpaceX, 1);
+			newGeom.halfSpaceY = transformation * glm::dvec4(halfSpaceY, 1);
+			newGeom.halfSpaceZ = transformation * glm::dvec4(halfSpaceZ, 1);
+		}
+
+		for (uint32_t i = 0; i < numFaces; i++)
+		{
+			fuzzybools::Face f = GetFace(i);
+			glm::dvec3 a = transformation * glm::dvec4(GetPoint(f.i0), 1);
+			glm::dvec3 b = transformation * glm::dvec4(GetPoint(f.i1), 1);
+			glm::dvec3 c = transformation * glm::dvec4(GetPoint(f.i2), 1);
+
+			if (transformationBreaksWinding)
+			{
+				newGeom.AddFace(b, a, c);
+			}
+			else
+			{
+				newGeom.AddFace(a, b, c);
+			}
+		}
+
+		return newGeom;
+	}
 }
