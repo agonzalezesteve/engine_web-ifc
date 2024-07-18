@@ -12,6 +12,8 @@
 #include <queue>
 #include <glm/vec3.hpp>
 
+#include "../representation/IfcGeometry.h"
+
 namespace webifc::geometry
 {
 
@@ -23,9 +25,9 @@ namespace webifc::geometry
 
 	struct BuildingElement : GeometryWithId
 	{
-		float thickness;
+		float thickness = 0.0;
 		std::vector<size_t> firstLevelBoundaries;
-		bool isVoid;
+		bool isVoid = false;
 		std::vector<size_t> voids;
 	};
 
@@ -74,15 +76,16 @@ namespace webifc::geometry
 	{
 	public:
 		std::vector<SpaceOrBuilding> GetSpacesAndBuildings(const fuzzybools::Geometry &unionGeom);
+		std::vector<FirstLevelBoundary> GetFirstLevelBoundaries(std::vector<BuildingElement> &buildingElements, const std::vector<SpaceOrBuilding> &spacesAndBuildings);
+		std::vector<SecondLevelBoundary> GetSecondLevelBoundaries(std::vector<BuildingElement> &buildingElements, const std::vector<SpaceOrBuilding> &spacesAndBuildings, std::vector<FirstLevelBoundary> &firstLevelBoundaries);
+		IfcCrossSections GetBoundaryLoops(const FirstLevelBoundary &boundary);
 
 	private:
 		std::pair<fuzzybools::Geometry, fuzzybools::Geometry> SplitFirstBoundaryInIntersectionAndDifference(const fuzzybools::Geometry &A, const fuzzybools::Geometry &B);
 		std::vector<fuzzybools::Geometry> SplitGeometryByContiguousAndCoplanarFaces(const fuzzybools::Geometry &geom);
-		std::vector<FirstLevelBoundary> GetFirstLevelBoundaries(std::vector<BuildingElement> &buildingElements, const std::vector<SpaceOrBuilding> &spaceAndBuildings);
-		void CorrectInternalSecondLevelBoundaries(std::vector<SecondLevelBoundary> &secondLevelBoundaries, const size_t buildingElementId, const std::vector<BuildingElement> &buildingElements);
+		void CorrectInternalSecondLevelBoundaries(std::vector<SecondLevelBoundary> &secondLevelBoundaries, const BuildingElement &buildingElements);
 		fuzzybools::Geometry IntersectFirstBoundaryWithSecondGeometry(const fuzzybools::Geometry &A, const fuzzybools::Geometry &B);
-		void AddVoids(const std::vector<BuildingElement> &buildingElements, const size_t buildingElementId, std::vector<SecondLevelBoundary> &secondLevelBoundaries);
-		std::vector<SecondLevelBoundary> GetSecondLevelBoundaries(std::vector<BuildingElement> &buildingElements, const std::vector<SpaceOrBuilding> &spaceAndBuildings, std::vector<FirstLevelBoundary> &firstLevelBoundaries);
+		void AddVoids(const BuildingElement &buildingElement, const std::vector<BuildingElement> &buildingElements, std::vector<SecondLevelBoundary> &secondLevelBoundaries);
 		bool ArePointsCollinear(const std::vector<fuzzybools::Point> &points, size_t idA, size_t idB, size_t idC);
 		void TryAddPoint(size_t pointId, std::vector<size_t> &wire, const std::vector<fuzzybools::Point> &points, bool &isWireClosed);
 		double WireArea(const std::vector<size_t> &wire, const std::vector<glm::dvec3> &points3D);
