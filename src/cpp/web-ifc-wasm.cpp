@@ -167,7 +167,7 @@ void StreamAllMeshes(uint32_t modelID, emscripten::val callback)
     StreamAllMeshesWithTypes(modelID, types, callback);
 }
 
-void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val callback, emscripten::val msgCallback)
+void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val spaceCallback, emscripten::val boundaryCallback, emscripten::val msgCallback)
 {
     if (!manager.IsModelOpen(modelID))
         return;
@@ -188,29 +188,116 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
 
     fuzzybools::Geometry unionGeom;
 
+    msgCallback(std::string("buildingElements"));
+    std::vector<webifc::geometry::BuildingElement> buildingElements;
     for (auto &expressId : expressIds)
     {
         auto mesh = geomLoader->GetFlatMesh(expressId, true);
 
-        for (auto &meshGeom : mesh.geometries) {
-            auto secondGeom = geomLoader->GetGeometry(meshGeom.geometryExpressID).Transform(meshGeom.transformation);
-            unionGeom = fuzzybools::Union(unionGeom, secondGeom);
+        for (auto &meshGeom : mesh.geometries)
+        {
+            auto &geom = geomLoader->GetGeometry(meshGeom.geometryExpressID);
+            auto buildingElementGeom = geom.Transform(meshGeom.transformation);
+
+            webifc::geometry::BuildingElement buildingElement;
+            buildingElement.id = expressId;
+            buildingElement.geometry = buildingElementGeom;
+            buildingElements.push_back(buildingElement);
+
+            unionGeom = fuzzybools::Union(unionGeom, buildingElementGeom);
         }
     }
-    
+
     geomLoader->Clear();
 
     auto spaceGenerator = webifc::geometry::IfcGeometrySpace();
+
+    msgCallback(std::string("spaces"));
     auto spacesAndBuildings = spaceGenerator.GetSpacesAndBuildings(unionGeom);
-    for (size_t spaceOrBuildingId = 0; spaceOrBuildingId < spacesAndBuildings.size(); spaceOrBuildingId++)
+
+    for (auto &spaceOrBuilding : spacesAndBuildings)
     {
-        auto spaceOrBuilding = spacesAndBuildings[spaceOrBuildingId];
         msgCallback(std::to_string(spaceOrBuilding.geometry.Volume()));
         if (spaceOrBuilding.isSpace)
         {
             webifc::geometry::IfcGeometry space;
             space.AddGeometry(spaceOrBuilding.geometry);
-            callback(space, spaceOrBuildingId, spacesAndBuildings.size());
+            spaceCallback(space);
+        }
+    }
+
+    msgCallback(std::string("firstLevelBoundaries"));
+    auto firstLevelBoundaries = spaceGenerator.GetFirstLevelBoundaries(buildingElements, spacesAndBuildings);
+
+    msgCallback(std::string("secondLevelBoundaries"));
+    auto secondLevelBoundaries = spaceGenerator.GetSecondLevelBoundaries(buildingElements, spacesAndBuildings, firstLevelBoundaries);
+
+    size_t secondLevelBoundaryId = 0;
+    while (secondLevelBoundaryId < secondLevelBoundaries.size())
+    {
+        auto secondLevelBoundary = secondLevelBoundaries[secondLevelBoundaryId];
+
+        switch (secondLevelBoundary.boundaryCondition)
+        {
+        case webifc::geometry::IfcInternalOrExternalEnum::INTERNAL:
+        {
+            auto otherSecondLevelBoundary = secondLevelBoundaries[secondLevelBoundaryId + 1];
+
+            boundaryCallback(
+                secondLevelBoundary.space,
+                secondLevelBoundary.buildingElement,
+                spaceGenerator.GetBoundaryLoops(secondLevelBoundary),
+                secondLevelBoundary.boundaryConditionToString());
+            boundaryCallback(
+                otherSecondLevelBoundary.space,
+                otherSecondLevelBoundary.buildingElement,
+                spaceGenerator.GetBoundaryLoops(otherSecondLevelBoundary),
+                otherSecondLevelBoundary.boundaryConditionToString());
+
+            secondLevelBoundaryId += 2;
+            break;
+        }
+        case webifc::geometry::IfcInternalOrExternalEnum::EXTERNAL:
+        {
+            if (spacesAndBuildings[secondLevelBoundary.space].isSpace)
+            {
+                boundaryCallback(
+                    secondLevelBoundary.space,
+                    secondLevelBoundary.buildingElement,
+                    spaceGenerator.GetBoundaryLoops(secondLevelBoundary),
+                    secondLevelBoundary.boundaryConditionToString());
+            }
+
+            auto otherSecondLevelBoundary = secondLevelBoundaries[secondLevelBoundaryId + 1];
+            if (spacesAndBuildings[otherSecondLevelBoundary.space].isSpace)
+            {
+                boundaryCallback(
+                    otherSecondLevelBoundary.space,
+                    otherSecondLevelBoundary.buildingElement,
+                    spaceGenerator.GetBoundaryLoops(otherSecondLevelBoundary),
+                    otherSecondLevelBoundary.boundaryConditionToString());
+            }
+
+            secondLevelBoundaryId += 2;
+            break;
+        }
+        case webifc::geometry::IfcInternalOrExternalEnum::NOTDEFINED:
+        {
+            if (spacesAndBuildings[secondLevelBoundary.space].isSpace)
+            {
+                boundaryCallback(
+                    secondLevelBoundary.space,
+                    secondLevelBoundary.buildingElement,
+                    spaceGenerator.GetBoundaryLoops(secondLevelBoundary),
+                    secondLevelBoundary.boundaryConditionToString());
+            }
+
+            secondLevelBoundaryId += 1;
+            break;
+        }
+        default:
+            secondLevelBoundaryId += 1;
+            break;
         }
     }
 }

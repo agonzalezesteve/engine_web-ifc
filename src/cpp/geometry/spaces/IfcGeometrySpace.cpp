@@ -3,6 +3,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 #include "IfcGeometrySpace.h"
+#include "../representation/geometry.h"
+#include "../representation/IfcCurve.h"
 
 namespace webifc::geometry
 {
@@ -138,22 +140,21 @@ namespace webifc::geometry
         return newGeoms;
     }
 
-    std::vector<FirstLevelBoundary> IfcGeometrySpace::GetFirstLevelBoundaries(std::vector<BuildingElement> &buildingElements, const std::vector<SpaceOrBuilding> &spaceAndBuildings)
+    std::vector<FirstLevelBoundary> IfcGeometrySpace::GetFirstLevelBoundaries(std::vector<BuildingElement> &buildingElements, const std::vector<SpaceOrBuilding> &spacesAndBuildings)
     {
         std::vector<FirstLevelBoundary> firstLevelBoundaries;
 
-        for (size_t spaceId = 0; spaceId < spaceAndBuildings.size(); spaceId++)
+        for (auto &spaceOrBuilding : spacesAndBuildings)
         {
-            auto geom = spaceAndBuildings[spaceId].geometry;
+            auto geom = spaceOrBuilding.geometry;
 
-            for (size_t buildingElementId = 0; buildingElementId < buildingElements.size(); buildingElementId++)
+            for (auto &buildingElement : buildingElements)
             {
-                auto &buildingElement = buildingElements[buildingElementId];
                 if (buildingElement.isVoid)
                     continue;
 
                 auto intersectionAndDifferenceGeoms = SplitFirstBoundaryInIntersectionAndDifference(geom, buildingElement.geometry);
-                for (auto firstLevelBoundaryGeom : SplitGeometryByContiguousAndCoplanarFaces(intersectionAndDifferenceGeoms.first))
+                for (auto &firstLevelBoundaryGeom : SplitGeometryByContiguousAndCoplanarFaces(intersectionAndDifferenceGeoms.first))
                 {
                     fuzzybools::Face tri = firstLevelBoundaryGeom.GetFace(0);
                     auto a = firstLevelBoundaryGeom.GetPoint(tri.i0);
@@ -167,8 +168,8 @@ namespace webifc::geometry
                     firstLevelBoundary.geometry = firstLevelBoundaryGeom;
                     firstLevelBoundary.point = a;
                     firstLevelBoundary.normal = norm;
-                    firstLevelBoundary.buildingElement = buildingElementId;
-                    firstLevelBoundary.space = spaceId;
+                    firstLevelBoundary.buildingElement = buildingElement.id;
+                    firstLevelBoundary.space = spaceOrBuilding.id;
 
                     firstLevelBoundaries.push_back(firstLevelBoundary);
                     buildingElement.firstLevelBoundaries.push_back(firstLevelBoundary.id);
@@ -183,14 +184,14 @@ namespace webifc::geometry
         return firstLevelBoundaries;
     }
 
-    void IfcGeometrySpace::CorrectInternalSecondLevelBoundaries(std::vector<SecondLevelBoundary> &secondLevelBoundaries, const size_t buildingElementId, const std::vector<BuildingElement> &buildingElements)
+    void IfcGeometrySpace::CorrectInternalSecondLevelBoundaries(std::vector<SecondLevelBoundary> &secondLevelBoundaries, const BuildingElement &buildingElement)
     {
         int secondLevelBoundaryId = secondLevelBoundaries.size() - 1;
 
         while (secondLevelBoundaryId >= 0)
         {
             auto &secondLevelBoundary = secondLevelBoundaries[secondLevelBoundaryId];
-            if (secondLevelBoundary.buildingElement != buildingElementId)
+            if (secondLevelBoundary.buildingElement != buildingElement.id)
                 break;
 
             switch (secondLevelBoundary.boundaryCondition)
@@ -199,7 +200,7 @@ namespace webifc::geometry
             {
                 auto &otherSecondLevelBoundary = secondLevelBoundaries[secondLevelBoundaryId - 1];
                 double internalSecondLevelBoundaryDistance = glm::dot(otherSecondLevelBoundary.normal, otherSecondLevelBoundary.point) - glm::dot(otherSecondLevelBoundary.normal, secondLevelBoundary.point);
-                if (std::fabs(internalSecondLevelBoundaryDistance - buildingElements[buildingElementId].thickness) > EPS_SMALL)
+                if (std::fabs(internalSecondLevelBoundaryDistance - buildingElement.thickness) > EPS_SMALL)
                 {
                     secondLevelBoundary.boundaryCondition = IfcInternalOrExternalEnum::NOTDEFINED;
                     otherSecondLevelBoundary.boundaryCondition = IfcInternalOrExternalEnum::NOTDEFINED;
@@ -233,9 +234,8 @@ namespace webifc::geometry
         return fuzzybools::SplitFirstBoundary(geom, bvh1, bvh2).second.second;
     }
 
-    void IfcGeometrySpace::AddVoids(const std::vector<BuildingElement> &buildingElements, const size_t buildingElementId, std::vector<SecondLevelBoundary> &secondLevelBoundaries)
+    void IfcGeometrySpace::AddVoids(const BuildingElement &buildingElement, const std::vector<BuildingElement> &buildingElements, std::vector<SecondLevelBoundary> &secondLevelBoundaries)
     {
-        auto buildingElement = buildingElements[buildingElementId];
         for (size_t i = 0; i < buildingElement.voids.size(); ++i)
         {
             auto voidElement = buildingElements[buildingElement.voids[i]];
@@ -294,13 +294,12 @@ namespace webifc::geometry
         }
     }
 
-    std::vector<SecondLevelBoundary> IfcGeometrySpace::GetSecondLevelBoundaries(std::vector<BuildingElement> &buildingElements, const std::vector<SpaceOrBuilding> &spaceAndBuildings, std::vector<FirstLevelBoundary> &firstLevelBoundaries)
+    std::vector<SecondLevelBoundary> IfcGeometrySpace::GetSecondLevelBoundaries(std::vector<BuildingElement> &buildingElements, const std::vector<SpaceOrBuilding> &spacesAndBuildings, std::vector<FirstLevelBoundary> &firstLevelBoundaries)
     {
         std::vector<SecondLevelBoundary> secondLevelBoundaries;
 
-        for (size_t buildingElementId = 0; buildingElementId < buildingElements.size(); buildingElementId++)
+        for (auto &buildingElement : buildingElements)
         {
-            auto &buildingElement = buildingElements[buildingElementId];
             if (buildingElement.isVoid)
                 continue;
 
@@ -314,7 +313,7 @@ namespace webifc::geometry
                 for (size_t j = i + 1; j < buildingElement.firstLevelBoundaries.size(); j++)
                 {
                     auto &otherFirstLevelBoundary = firstLevelBoundaries[buildingElement.firstLevelBoundaries[j]];
-                    if (glm::dot(firstLevelBoundary.normal, otherFirstLevelBoundary.normal) + 1 > EPS_SMALL)
+                    if (glm::dot(firstLevelBoundary.normal, otherFirstLevelBoundary.normal) + 1 > EPS_BIG)
                         continue;
 
                     double firstLevelBoundaryDistance = glm::dot(firstLevelBoundary.normal, firstLevelBoundary.point) - glm::dot(firstLevelBoundary.normal, otherFirstLevelBoundary.point);
@@ -322,17 +321,22 @@ namespace webifc::geometry
                         continue;
 
                     auto intersectionAndDifferenceGeoms = SplitFirstBoundaryInIntersectionAndDifference(firstLevelBoundary.geometry, otherFirstLevelBoundary.geometry.Translate((float)firstLevelBoundaryDistance * firstLevelBoundary.normal));
-
-                    for (auto secondLevelBoundaryGeom : SplitGeometryByContiguousAndCoplanarFaces(intersectionAndDifferenceGeoms.first))
+                    for (auto &secondLevelBoundaryGeom : SplitGeometryByContiguousAndCoplanarFaces(intersectionAndDifferenceGeoms.first))
                     {
-                        IfcInternalOrExternalEnum boundaryCondition = ((!spaceAndBuildings[firstLevelBoundary.space].isSpace || !spaceAndBuildings[otherFirstLevelBoundary.space].isSpace) ? IfcInternalOrExternalEnum::EXTERNAL : IfcInternalOrExternalEnum::INTERNAL);
+                        auto area = secondLevelBoundaryGeom.Area();
+                        if (area < EPS_BIG2)
+                        {
+                            continue;
+                        }
+
+                        IfcInternalOrExternalEnum boundaryCondition = ((!spacesAndBuildings[firstLevelBoundary.space].isSpace || !spacesAndBuildings[otherFirstLevelBoundary.space].isSpace) ? IfcInternalOrExternalEnum::EXTERNAL : IfcInternalOrExternalEnum::INTERNAL);
 
                         SecondLevelBoundary secondLevelBoundary;
                         secondLevelBoundary.id = secondLevelBoundaries.size();
                         secondLevelBoundary.geometry = secondLevelBoundaryGeom;
                         secondLevelBoundary.point = secondLevelBoundary.geometry.GetPoint(secondLevelBoundary.geometry.GetFace(0).i0);
                         secondLevelBoundary.normal = firstLevelBoundary.normal;
-                        secondLevelBoundary.buildingElement = buildingElementId;
+                        secondLevelBoundary.buildingElement = buildingElement.id;
                         secondLevelBoundary.space = firstLevelBoundary.space;
                         secondLevelBoundary.boundaryCondition = boundaryCondition;
                         secondLevelBoundary.parentBoundary = -1;
@@ -344,13 +348,12 @@ namespace webifc::geometry
                         otherSecondLevelBoundary.geometry.Flip();
                         otherSecondLevelBoundary.point = otherSecondLevelBoundary.geometry.GetPoint(otherSecondLevelBoundary.geometry.GetFace(0).i0);
                         otherSecondLevelBoundary.normal = otherFirstLevelBoundary.normal;
-                        otherSecondLevelBoundary.buildingElement = buildingElementId;
+                        otherSecondLevelBoundary.buildingElement = buildingElement.id;
                         otherSecondLevelBoundary.space = otherFirstLevelBoundary.space;
                         otherSecondLevelBoundary.boundaryCondition = boundaryCondition;
                         otherSecondLevelBoundary.parentBoundary = -1;
                         secondLevelBoundaries.push_back(otherSecondLevelBoundary);
 
-                        auto area = secondLevelBoundary.geometry.Area();
                         if (area > maxArea)
                         {
                             buildingElement.thickness = firstLevelBoundaryDistance;
@@ -366,14 +369,14 @@ namespace webifc::geometry
                         break;
                 }
 
-                for (auto secondLevelBoundaryGeom : SplitGeometryByContiguousAndCoplanarFaces(firstLevelBoundary.geometry))
+                for (auto &secondLevelBoundaryGeom : SplitGeometryByContiguousAndCoplanarFaces(firstLevelBoundary.geometry))
                 {
                     SecondLevelBoundary secondLevelBoundary;
                     secondLevelBoundary.id = secondLevelBoundaries.size();
                     secondLevelBoundary.geometry = secondLevelBoundaryGeom;
                     secondLevelBoundary.point = secondLevelBoundary.geometry.GetPoint(secondLevelBoundary.geometry.GetFace(0).i0);
                     secondLevelBoundary.normal = firstLevelBoundary.normal;
-                    secondLevelBoundary.buildingElement = buildingElementId;
+                    secondLevelBoundary.buildingElement = buildingElement.id;
                     secondLevelBoundary.space = firstLevelBoundary.space;
                     secondLevelBoundary.boundaryCondition = IfcInternalOrExternalEnum::NOTDEFINED;
                     secondLevelBoundary.parentBoundary = -1;
@@ -381,8 +384,8 @@ namespace webifc::geometry
                 }
             }
 
-            CorrectInternalSecondLevelBoundaries(secondLevelBoundaries, buildingElementId, buildingElements);
-            AddVoids(buildingElements, buildingElementId, secondLevelBoundaries);
+            CorrectInternalSecondLevelBoundaries(secondLevelBoundaries, buildingElement);
+            AddVoids(buildingElement, buildingElements, secondLevelBoundaries);
         }
 
         return secondLevelBoundaries;
@@ -466,7 +469,7 @@ namespace webifc::geometry
     {
         std::vector<std::pair<std::vector<glm::dvec3>, std::vector<std::vector<size_t>>>> polygons;
 
-        for (auto contiguousAndCoplanarFaces : SplitGeometryByContiguousAndCoplanarFaces(A))
+        for (auto &contiguousAndCoplanarFaces : SplitGeometryByContiguousAndCoplanarFaces(A))
         {
             std::pair<std::vector<glm::dvec3>, std::vector<std::vector<size_t>>> polygon;
 
@@ -548,6 +551,26 @@ namespace webifc::geometry
         }
 
         return polygons;
+    }
+
+    IfcCrossSections IfcGeometrySpace::GetBoundaryLoops(const FirstLevelBoundary &boundary)
+    {
+        IfcCrossSections boundaryLoops;
+
+        auto boundaryPolygon = SplitGeometryInPolygons(boundary.geometry)[0];
+        for (auto &polygonWire : boundaryPolygon.second)
+        {
+            IfcCurve curve;
+
+            for (auto &polygonVertex : polygonWire)
+            {
+                curve.Add(boundaryPolygon.first[polygonVertex]);
+            }
+
+            boundaryLoops.curves.push_back(curve);
+        }
+
+        return boundaryLoops;
     }
 
 }
