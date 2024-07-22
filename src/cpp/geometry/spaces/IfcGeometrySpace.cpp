@@ -383,7 +383,7 @@ namespace webifc::geometry
                     secondLevelBoundaries.push_back(secondLevelBoundary);
                 }
             }
-
+            
             CorrectInternalSecondLevelBoundaries(secondLevelBoundaries, buildingElement);
             AddVoids(buildingElement, buildingElements, secondLevelBoundaries);
         }
@@ -478,73 +478,94 @@ namespace webifc::geometry
             fuzzybools::SharedPosition sp;
             sp.AddGeometryA(contiguousAndCoplanarFaces);
 
-            auto contoursA = sp.A.GetContourSegments();
-            for (auto &[planeId, contours] : contoursA)
+            auto allContours = sp.A.GetContourSegments();
+            if (allContours.size() > 1) {
+                continue;
+            }
+
+            auto it = allContours.begin();
+            auto contours = it->second;
+
+            std::map<size_t, size_t> countMap;
+            for (const auto& pair: contours) {
+                countMap[pair.first]++;
+                countMap[pair.second]++;
+            }
+
+            size_t minCount = std::numeric_limits<size_t>::max();
+            size_t maxCount = 0;
+            for (const auto& entry : countMap) {
+                minCount = std::min(minCount, entry.second);
+                maxCount = std::max(maxCount, entry.second);
+            }
+
+            if (minCount != 2 || maxCount != 2) {
+                continue;
+            }
+            
+            std::vector<bool> visited(contours.size(), false);
+            for (int i = 0; i < contours.size(); ++i)
             {
-                std::vector<bool> visited(contours.size(), false);
-                for (int i = 0; i < contours.size(); ++i)
+                if (visited[i])
+                    continue;
+
+                std::vector<size_t> wire;
+
+                wire.push_back(contours[i].first);
+                wire.push_back(contours[i].second);
+                visited[i] = true;
+
+                bool isWireClosed = false;
+                while (!isWireClosed)
                 {
-                    if (visited[i])
-                        continue;
-
-                    std::vector<size_t> wire;
-
-                    wire.push_back(contours[i].first);
-                    wire.push_back(contours[i].second);
-                    visited[i] = true;
-
-                    bool isWireClosed = false;
-                    while (!isWireClosed)
+                    for (int j = i + 1; j < contours.size(); ++j)
                     {
-                        for (int j = i + 1; j < contours.size(); ++j)
-                        {
-                            if (visited[j])
-                                continue;
+                        if (visited[j])
+                            continue;
 
-                            if (contours[j].first == wire[wire.size() - 1])
-                            {
-                                TryAddPoint(contours[j].second, wire, sp.points, isWireClosed);
-                                visited[j] = true;
-                                break;
-                            }
-                            else if (contours[j].second == wire[wire.size() - 1])
-                            {
-                                TryAddPoint(contours[j].first, wire, sp.points, isWireClosed);
-                                visited[j] = true;
-                                break;
-                            }
+                        if (contours[j].first == wire[wire.size() - 1])
+                        {
+                            TryAddPoint(contours[j].second, wire, sp.points, isWireClosed);
+                            visited[j] = true;
+                            break;
+                        }
+                        else if (contours[j].second == wire[wire.size() - 1])
+                        {
+                            TryAddPoint(contours[j].first, wire, sp.points, isWireClosed);
+                            visited[j] = true;
+                            break;
                         }
                     }
-
-                    std::vector<size_t> polygonWire(wire.size());
-                    for (int k = 0; k < wire.size(); ++k)
-                    {
-                        auto pointId = wire[k];
-                        auto point3D = sp.points[pointId].location3D;
-                        polygonWire[k] = polygonSharedPosition.AddPoint(point3D);
-                    }
-
-                    if (polygon.second.size() > 0 && glm::dot(GetWireNormal(polygon.second[0], sp.points), GetWireNormal(polygonWire, sp.points)) < 0)
-                    {
-                        std::reverse(polygonWire.begin(), polygonWire.end());
-                    }
-
-                    polygon.second.push_back(polygonWire);
                 }
 
-                for (auto &point : polygonSharedPosition.points)
+                std::vector<size_t> polygonWire(wire.size());
+                for (int k = 0; k < wire.size(); ++k)
                 {
-                    polygon.first.push_back(point.location3D);
+                    auto pointId = wire[k];
+                    auto point3D = sp.points[pointId].location3D;
+                    polygonWire[k] = polygonSharedPosition.AddPoint(point3D);
                 }
 
-                if (polygon.second.size() > 1)
+                if (polygon.second.size() > 0 && glm::dot(GetWireNormal(polygon.second[0], sp.points), GetWireNormal(polygonWire, sp.points)) < 0)
                 {
-                    auto comparator = [this, &polygon](std::vector<size_t> a, std::vector<size_t> b)
-                    {
-                        return WireArea(a, polygon.first) > WireArea(b, polygon.first);
-                    };
-                    std::sort(polygon.second.begin(), polygon.second.end(), comparator);
+                    std::reverse(polygonWire.begin(), polygonWire.end());
                 }
+
+                polygon.second.push_back(polygonWire);
+            }
+
+            for (auto &point : polygonSharedPosition.points)
+            {
+                polygon.first.push_back(point.location3D);
+            }
+
+            if (polygon.second.size() > 1)
+            {
+                auto comparator = [this, &polygon](std::vector<size_t> a, std::vector<size_t> b)
+                {
+                    return WireArea(a, polygon.first) > WireArea(b, polygon.first);
+                };
+                std::sort(polygon.second.begin(), polygon.second.end(), comparator);
             }
 
             polygons.push_back(polygon);

@@ -217,7 +217,6 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
 
     for (auto &spaceOrBuilding : spacesAndBuildings)
     {
-        msgCallback(std::to_string(spaceOrBuilding.geometry.Volume()));
         if (spaceOrBuilding.isSpace)
         {
             webifc::geometry::IfcGeometry space;
@@ -243,15 +242,20 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
         {
             auto otherSecondLevelBoundary = secondLevelBoundaries[secondLevelBoundaryId + 1];
 
+            webifc::geometry::IfcGeometry secondLevelBoundaryGeometry;
+            secondLevelBoundaryGeometry.AddGeometry(secondLevelBoundary.geometry);
             boundaryCallback(
                 secondLevelBoundary.space,
                 secondLevelBoundary.buildingElement,
-                spaceGenerator.GetBoundaryLoops(secondLevelBoundary),
+                secondLevelBoundaryGeometry,
                 secondLevelBoundary.boundaryConditionToString());
+
+            webifc::geometry::IfcGeometry otherSecondLevelBoundaryGeometry;
+            otherSecondLevelBoundaryGeometry.AddGeometry(otherSecondLevelBoundary.geometry);
             boundaryCallback(
                 otherSecondLevelBoundary.space,
                 otherSecondLevelBoundary.buildingElement,
-                spaceGenerator.GetBoundaryLoops(otherSecondLevelBoundary),
+                otherSecondLevelBoundaryGeometry,
                 otherSecondLevelBoundary.boundaryConditionToString());
 
             secondLevelBoundaryId += 2;
@@ -261,20 +265,24 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
         {
             if (spacesAndBuildings[secondLevelBoundary.space].isSpace)
             {
+                webifc::geometry::IfcGeometry secondLevelBoundaryGeometry;
+                secondLevelBoundaryGeometry.AddGeometry(secondLevelBoundary.geometry);
                 boundaryCallback(
                     secondLevelBoundary.space,
                     secondLevelBoundary.buildingElement,
-                    spaceGenerator.GetBoundaryLoops(secondLevelBoundary),
+                    secondLevelBoundaryGeometry,
                     secondLevelBoundary.boundaryConditionToString());
             }
 
             auto otherSecondLevelBoundary = secondLevelBoundaries[secondLevelBoundaryId + 1];
             if (spacesAndBuildings[otherSecondLevelBoundary.space].isSpace)
             {
+                webifc::geometry::IfcGeometry otherSecondLevelBoundaryGeometry;
+                otherSecondLevelBoundaryGeometry.AddGeometry(otherSecondLevelBoundary.geometry);
                 boundaryCallback(
                     otherSecondLevelBoundary.space,
                     otherSecondLevelBoundary.buildingElement,
-                    spaceGenerator.GetBoundaryLoops(otherSecondLevelBoundary),
+                    otherSecondLevelBoundaryGeometry,
                     otherSecondLevelBoundary.boundaryConditionToString());
             }
 
@@ -285,10 +293,12 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
         {
             if (spacesAndBuildings[secondLevelBoundary.space].isSpace)
             {
+                webifc::geometry::IfcGeometry secondLevelBoundaryGeometry;
+                secondLevelBoundaryGeometry.AddGeometry(secondLevelBoundary.geometry);
                 boundaryCallback(
                     secondLevelBoundary.space,
                     secondLevelBoundary.buildingElement,
-                    spaceGenerator.GetBoundaryLoops(secondLevelBoundary),
+                    secondLevelBoundaryGeometry,
                     secondLevelBoundary.boundaryConditionToString());
             }
 
