@@ -217,12 +217,9 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
 
     for (auto &spaceOrBuilding : spacesAndBuildings)
     {
-        if (spaceOrBuilding.isSpace)
-        {
-            webifc::geometry::IfcGeometry space;
-            space.AddGeometry(spaceOrBuilding.geometry);
-            spaceCallback(space);
-        }
+        webifc::geometry::IfcGeometry space;
+        space.AddGeometry(spaceOrBuilding.geometry);
+        spaceCallback(space, spaceOrBuilding.isSpace);
     }
 
     msgCallback(std::string("firstLevelBoundaries"));

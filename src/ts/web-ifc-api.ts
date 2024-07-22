@@ -944,7 +944,7 @@ export class IfcAPI {
      */
     FindSpacesMesh(modelID: number,
         types: Array<number>,
-        spaceCallback: (geometry: IfcGeometry) => void,
+        spaceCallback: (geometry: IfcGeometry, isSpace: boolean) => void,
         boundaryCallback: (
             space: number,
             buildingElement: string,
