@@ -181,7 +181,7 @@ export class IfcAPI {
      * you override the path from which the wasm module is loaded.
      */
     async Init(customLocateFileHandler?: LocateFileHandlerFn) {
-        if (WebIFCWasm) {
+        if (WebIFCWasm && this.wasmModule == undefined) {
             let locateFileHandler: LocateFileHandlerFn = (path, prefix) => {
                 // when the wasm module requests the wasm file, we redirect to include the user specified path
                 if (path.endsWith(".wasm")) {
@@ -680,7 +680,7 @@ export class IfcAPI {
      * @param modelID model ID
      * @returns vector of all line IDs
      */
-    GetAllLines(modelID: Number): Vector<number> {
+    GetAllLines(modelID: number): Vector<number> {
         let lineIds = this.wasmModule.GetAllLines(modelID);
         lineIds[Symbol.iterator] = function* () { for (let i = 0; i < lineIds.size(); i++) yield lineIds.get(i); }
         return lineIds;
@@ -691,7 +691,7 @@ export class IfcAPI {
      * @param modelID model ID
      * @returns Lists with the cross sections curves as sets of points
      */
-    GetAllCrossSections2D(modelID: Number): Array<CrossSection> {
+    GetAllCrossSections2D(modelID: number): Array<CrossSection> {
         const crossSections = this.wasmModule.GetAllCrossSections(modelID, 2);
         const crossSectionList = [];
         for (let i = 0; i < crossSections.size(); i++) {
@@ -710,7 +710,7 @@ export class IfcAPI {
                 curveList.push(newCurve);
                 expressList.push(alignment.expressID.get(j));
             }
-            const align = { origin, curves: curveList, expressID: expressList };
+            const align = { FlatCoordinationMatrix: this.GetCoordinationMatrix(modelID), curves: curveList, expressID: expressList };
             crossSectionList.push(align);
         }
         return crossSectionList;
@@ -721,7 +721,7 @@ export class IfcAPI {
      * @param modelID model ID
      * @returns Lists with the cross sections curves as sets of points
      */
-    GetAllCrossSections3D(modelID: Number): Array<CrossSection> {
+    GetAllCrossSections3D(modelID: number): Array<CrossSection> {
         const crossSections = this.wasmModule.GetAllCrossSections(modelID, 3);
         const crossSectionList = [];
         for (let i = 0; i < crossSections.size(); i++) {
@@ -740,7 +740,7 @@ export class IfcAPI {
                 curveList.push(newCurve);
                 expressList.push(alignment.expressID.get(j));
             }
-            const align = { origin, curves: curveList, expressID: expressList };
+            const align = { FlatCoordinationMatrix: this.GetCoordinationMatrix(modelID), curves: curveList, expressID: expressList };
             crossSectionList.push(align);
         }
         return crossSectionList;
@@ -751,7 +751,7 @@ export class IfcAPI {
      * @param modelID model ID
      * @returns Lists with horizontal and vertical curves as sets of points
      */
-    GetAllAlignments(modelID: Number): any {
+    GetAllAlignments(modelID: number): any {
         const alignments = this.wasmModule.GetAllAlignments(modelID);
         const alignmentList = [];
         for (let i = 0; i < alignments.size(); i++) {
@@ -862,7 +862,7 @@ export class IfcAPI {
             }
 
             const align = {
-                origin,
+                FlatCoordinationMatrix: this.GetCoordinationMatrix(modelID),
                 horizontal: horList,
                 vertical: verList,
                 curve3D: curve3DList,
@@ -913,6 +913,15 @@ export class IfcAPI {
     CloseModel(modelID: number) {
         this.ifcGuidMap.delete(modelID);
         this.wasmModule.CloseModel(modelID);
+    }
+
+    /**
+     * Closes all models and frees all related memory. Please note that after calling this you must call Init() again to ensure web-ifc is in a working state.
+    */
+    Dispose() {
+        this.ifcGuidMap.clear()
+        this.wasmModule.CloseAllModels();
+        this.wasmModule = undefined;
     }
 
     /**

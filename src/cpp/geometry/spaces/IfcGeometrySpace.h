@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <fuzzy/geometry.h>
-#include <fuzzy/shared-position.h>
-#include <fuzzy/fuzzy-bools.h>
+#include "../operations/boolean-utils/geometry.h"
+#include "../operations/boolean-utils/shared-position.h"
+#include "../operations/boolean-utils/fuzzy-bools.h"
 #include <vector>
 #include <string>
 #include <queue>

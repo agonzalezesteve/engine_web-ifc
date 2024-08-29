@@ -12,8 +12,9 @@
 #include <spdlog/spdlog.h>
 #include "modelmanager/ModelManager.h"
 #include "version.h"
-#include <fuzzy/fuzzy-bools.h>
+#include "geometry/operations/boolean-utils/fuzzy-bools.h"
 #include "geometry/spaces/IfcGeometrySpace.h"
+#include "geometry/IfcGeometryProcessor.h"
 
 #ifdef __EMSCRIPTEN_PTHREADS__
 constexpr bool MT_ENABLED = true;
@@ -26,6 +27,11 @@ webifc::manager::ModelManager manager = new webifc::manager::ModelManager(MT_ENA
 int CreateModel(webifc::manager::LoaderSettings settings)
 {
     return manager.CreateModel(settings);
+}
+
+void CloseAllModels()
+{
+    return manager.CloseAllModels();
 }
 
 int OpenModel(webifc::manager::LoaderSettings settings, emscripten::val callback)
@@ -201,10 +207,10 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
 
             webifc::geometry::BuildingElement buildingElement;
             buildingElement.id = expressId;
-            buildingElement.geometry = buildingElementGeom;
+            buildingElement.geometry = webifc::geometry::booleanManager::convertToEngine(buildingElementGeom);
             buildingElements.push_back(buildingElement);
 
-            unionGeom = fuzzybools::Union(unionGeom, buildingElementGeom);
+            unionGeom = fuzzybools::Union(unionGeom, webifc::geometry::booleanManager::convertToEngine(buildingElementGeom));
         }
     }
 
@@ -218,7 +224,7 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
     for (auto &spaceOrBuilding : spacesAndBuildings)
     {
         webifc::geometry::IfcGeometry space;
-        space.AddGeometry(spaceOrBuilding.geometry);
+        space.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(spaceOrBuilding.geometry));
         spaceCallback(space, spaceOrBuilding.isSpace);
     }
 
@@ -240,7 +246,7 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
             auto otherSecondLevelBoundary = secondLevelBoundaries[secondLevelBoundaryId + 1];
 
             webifc::geometry::IfcGeometry secondLevelBoundaryGeometry;
-            secondLevelBoundaryGeometry.AddGeometry(secondLevelBoundary.geometry);
+            secondLevelBoundaryGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(secondLevelBoundary.geometry));
             boundaryCallback(
                 secondLevelBoundary.space,
                 secondLevelBoundary.buildingElement,
@@ -248,7 +254,7 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
                 secondLevelBoundary.boundaryConditionToString());
 
             webifc::geometry::IfcGeometry otherSecondLevelBoundaryGeometry;
-            otherSecondLevelBoundaryGeometry.AddGeometry(otherSecondLevelBoundary.geometry);
+            otherSecondLevelBoundaryGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(otherSecondLevelBoundary.geometry));
             boundaryCallback(
                 otherSecondLevelBoundary.space,
                 otherSecondLevelBoundary.buildingElement,
@@ -263,7 +269,7 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
             if (spacesAndBuildings[secondLevelBoundary.space].isSpace)
             {
                 webifc::geometry::IfcGeometry secondLevelBoundaryGeometry;
-                secondLevelBoundaryGeometry.AddGeometry(secondLevelBoundary.geometry);
+                secondLevelBoundaryGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(secondLevelBoundary.geometry));
                 boundaryCallback(
                     secondLevelBoundary.space,
                     secondLevelBoundary.buildingElement,
@@ -275,7 +281,7 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
             if (spacesAndBuildings[otherSecondLevelBoundary.space].isSpace)
             {
                 webifc::geometry::IfcGeometry otherSecondLevelBoundaryGeometry;
-                otherSecondLevelBoundaryGeometry.AddGeometry(otherSecondLevelBoundary.geometry);
+                otherSecondLevelBoundaryGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(otherSecondLevelBoundary.geometry));
                 boundaryCallback(
                     otherSecondLevelBoundary.space,
                     otherSecondLevelBoundary.buildingElement,
@@ -291,7 +297,7 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
             if (spacesAndBuildings[secondLevelBoundary.space].isSpace)
             {
                 webifc::geometry::IfcGeometry secondLevelBoundaryGeometry;
-                secondLevelBoundaryGeometry.AddGeometry(secondLevelBoundary.geometry);
+                secondLevelBoundaryGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(secondLevelBoundary.geometry));
                 boundaryCallback(
                     secondLevelBoundary.space,
                     secondLevelBoundary.buildingElement,
@@ -1034,4 +1040,5 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::function("GetTypeCodeFromName", &GetTypeCodeFromName);
     emscripten::function("IsIfcElement", &IsIfcElement);
     emscripten::function("GetVersion", &GetVersion);
+    emscripten::function("CloseAllModels", &CloseAllModels);
 }

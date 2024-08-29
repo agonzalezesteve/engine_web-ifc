@@ -14,8 +14,7 @@
 #include "operations/geometryutils.h"
 #include "operations/curve-utils.h"
 #include "operations/mesh_utils.h"
-#include <fuzzy/fuzzy-bools.h>
-#include <emscripten/bind.h>
+#include "operations/boolean-utils/fuzzy-bools.h"
 
 namespace webifc::geometry
 {
@@ -53,6 +52,7 @@ namespace webifc::geometry
     {
         _expressIDToGeometry.clear();
         std::unordered_map<uint32_t, IfcGeometry>().swap(_expressIDToGeometry);
+        _geometryLoader.Clear();
     }
 
     std::array<double, 16> IfcGeometryProcessor::GetFlatCoordinationMatrix() const
@@ -1071,57 +1071,6 @@ namespace webifc::geometry
                 VKnots.push_back(_loader.GetDoubleArgument(token));
             }
 
-            if (UKnots[UKnots.size() - 1] != (int)UKnots[UKnots.size() - 1])
-            {
-                for (uint32_t i = 0; i < UKnots.size(); i++)
-                {
-                    UKnots[i] = UKnots[i] * (UKnots.size() - 1) / UKnots[UKnots.size() - 1];
-                }
-            }
-
-            if (VKnots[VKnots.size() - 1] != (int)VKnots[VKnots.size() - 1])
-            {
-                for (uint32_t i = 0; i < VKnots.size(); i++)
-                {
-                    VKnots[i] = VKnots[i] * (VKnots.size() - 1) / VKnots[VKnots.size() - 1];
-                }
-            }
-
-            // if (closedU == "T")
-            // {
-            //  std::vector<std::vector<glm::vec<3, glm::f64>>> newCtrolPts;
-            //  for (uint32_t i = 0; i < Udegree; i++)
-            //  {
-            //      newCtrolPts.push_back(ctrolPts[ctrolPts.size() - 1 + (i - Udegree)]);
-            //  }
-            //  for (uint32_t s = 0; s < ctrolPts.size(); s++)
-            //  {
-            //      newCtrolPts.push_back(ctrolPts[s]);
-            //  }
-            //  ctrolPts = newCtrolPts;
-            //  UMultiplicity[0] += Udegree;
-            // }
-
-            // if (closedV == "T")
-            // {
-            //  std::vector<std::vector<glm::vec<3, glm::f64>>> newCtrolPts;
-            //  for (uint32_t r = 0; r < ctrolPts.size(); r++)
-            //  {
-            //      std::vector<glm::vec<3, glm::f64>> newSubList;
-            //      for (uint32_t i = 0; i < Vdegree; i++)
-            //      {
-            //          newSubList.push_back(ctrolPts[r][ctrolPts[r].size() - 1 + (i - Vdegree)]);
-            //      }
-            //      for (uint32_t s = 0; s < ctrolPts[r].size(); s++)
-            //      {
-            //          newSubList.push_back(ctrolPts[r][s]);
-            //      }
-            //      newCtrolPts.push_back(newSubList);
-            //  }
-            //  ctrolPts = newCtrolPts;
-            //  VMultiplicity[0] += Vdegree;
-            // }
-
             surface.BSplineSurface.Active = true;
             surface.BSplineSurface.UDegree = Udegree;
             surface.BSplineSurface.VDegree = Vdegree;
@@ -1221,21 +1170,21 @@ namespace webifc::geometry
                 VKnots.push_back(_loader.GetDoubleArgument(token));
             }
 
-            if (UKnots[UKnots.size() - 1] != (int)UKnots[UKnots.size() - 1])
-            {
-                for (uint32_t i = 0; i < UKnots.size(); i++)
-                {
-                    UKnots[i] = UKnots[i] * (UKnots.size() - 1) / UKnots[UKnots.size() - 1];
-                }
-            }
+            // if (UKnots[UKnots.size() - 1] != (int)UKnots[UKnots.size() - 1])
+            // {
+            //     for (uint32_t i = 0; i < UKnots.size(); i++)
+            //     {
+            //         UKnots[i] = UKnots[i] * (UKnots.size() - 1) / UKnots[UKnots.size() - 1];
+            //     }
+            // }
 
-            if (VKnots[VKnots.size() - 1] != (int)VKnots[VKnots.size() - 1])
-            {
-                for (uint32_t i = 0; i < VKnots.size(); i++)
-                {
-                    VKnots[i] = VKnots[i] * (VKnots.size() - 1) / VKnots[VKnots.size() - 1];
-                }
-            }
+            // if (VKnots[VKnots.size() - 1] != (int)VKnots[VKnots.size() - 1])
+            // {
+            //     for (uint32_t i = 0; i < VKnots.size(); i++)
+            //     {
+            //         VKnots[i] = VKnots[i] * (VKnots.size() - 1) / VKnots[VKnots.size() - 1];
+            //     }
+            // }
 
             // if (closedU == "T")
             // {
@@ -1455,94 +1404,7 @@ namespace webifc::geometry
 
     IfcGeometry IfcGeometryProcessor::BoolProcess(const std::vector<IfcGeometry> &firstGeoms, std::vector<IfcGeometry> &secondGeoms, std::string op)
     {
-        spdlog::debug("[BoolProcess({})]");
-        IfcGeometry finalResult;
-
-        for (auto &firstGeom : firstGeoms)
-        {
-            fuzzybools::Geometry result = firstGeom;
-            for (auto &secondGeom : secondGeoms)
-            {
-                bool doit = true;
-                if (secondGeom.numFaces == 0)
-                {
-                    spdlog::error("[BoolProcess()] bool aborted due to empty source or target");
-
-                    // bail out because we will get strange meshes
-                    // if this happens, probably there's an issue parsing the mesh that occurred earlier
-                    doit = false;
-                }
-
-                if (result.numFaces == 0)
-                {
-                    spdlog::error("[BoolProcess()] bool aborted due to empty source or target");
-
-                    // bail out because we will get strange meshes
-                    // if this happens, probably there's an issue parsing the mesh that occurred earlier
-                    break;
-                }
-
-                if (doit)
-                {
-                    IfcGeometry secondOperator;
-
-                    if (secondGeom.halfSpace)
-                    {
-                        glm::dvec3 origin = secondGeom.halfSpaceOrigin;
-                        glm::dvec3 x = secondGeom.halfSpaceX - origin;
-                        glm::dvec3 y = secondGeom.halfSpaceY - origin;
-                        glm::dvec3 z = secondGeom.halfSpaceZ - origin;
-                        glm::dmat4 trans = glm::dmat4(
-                            glm::dvec4(x, 0),
-                            glm::dvec4(y, 0),
-                            glm::dvec4(z, 0),
-                            glm::dvec4(0, 0, 0, 1));
-
-                        double scaleX = 1;
-                        double scaleY = 1;
-                        double scaleZ = 1;
-
-                        for (uint32_t i = 0; i < result.numPoints; i++)
-                        {
-                            glm::dvec3 p = result.GetPoint(i);
-                            glm::dvec3 vec = (p - origin);
-                            double dx = glm::dot(vec, x);
-                            double dy = glm::dot(vec, y);
-                            double dz = glm::dot(vec, z);
-                            if (glm::abs(dx) > scaleX)
-                            {
-                                scaleX = glm::abs(dx);
-                            }
-                            if (glm::abs(dy) > scaleY)
-                            {
-                                scaleY = glm::abs(dy);
-                            }
-                            if (glm::abs(dz) > scaleZ)
-                            {
-                                scaleZ = glm::abs(dz);
-                            }
-                        }
-                        secondOperator.AddGeometry(secondGeom, trans, scaleX * 2, scaleY * 2, scaleZ * 2, secondGeom.halfSpaceOrigin);
-                    }
-                    else
-                    {
-                        secondOperator = secondGeom;
-                    }
-
-                    if (op == "DIFFERENCE")
-                    {
-                        result = fuzzybools::Difference(result, secondOperator);
-                    }
-                    else if (op == "UNION")
-                    {
-                        result = fuzzybools::Union(result, secondOperator);
-                    }
-                }
-            }
-            finalResult.AddGeometry(result);
-        }
-
-        return finalResult;
+        return boolEngine.BoolProcess(firstGeoms, secondGeoms, op);
     }
 
     std::vector<uint32_t> IfcGeometryProcessor::Read2DArrayOfThreeIndices()
@@ -1726,6 +1588,136 @@ namespace webifc::geometry
             spdlog::error("[AddFaceToGeometry()] unexpected face type {}", expressID, lineType);
             break;
         }
+    }
+
+    fuzzybools::Geometry booleanManager::convertToEngine(Geometry geom)
+    {
+        fuzzybools::Geometry newGeom;
+        newGeom.fvertexData = geom.fvertexData;
+		newGeom.vertexData = geom.vertexData;
+		newGeom.indexData = geom.indexData;
+		newGeom.numPoints = geom.numPoints;
+		newGeom.numFaces = geom.numFaces;
+        return newGeom;
+    }
+
+    IfcGeometry booleanManager::convertToWebIfc(fuzzybools::Geometry geom)
+    {
+        IfcGeometry newGeom;
+        newGeom.fvertexData = geom.fvertexData;
+		newGeom.vertexData = geom.vertexData;
+		newGeom.indexData = geom.indexData;
+		newGeom.numPoints = geom.numPoints;
+		newGeom.numFaces = geom.numFaces;
+        return newGeom;
+    }
+
+    IfcGeometry booleanManager::BoolProcess(const std::vector<IfcGeometry> &firstGeoms, std::vector<IfcGeometry> &secondGeoms, std::string op)
+    {
+        spdlog::debug("[BoolProcess({})]");
+        IfcGeometry finalResult;
+
+        for (auto &firstGeom : firstGeoms)
+        {
+            IfcGeometry result = firstGeom;
+            for (auto &secondGeom : secondGeoms)
+            {
+                bool doit = true;
+                if (secondGeom.numFaces == 0)
+                {
+                    spdlog::error("[BoolProcess()] bool aborted due to empty source or target");
+
+                    // bail out because we will get strange meshes
+                    // if this happens, probably there's an issue parsing the mesh that occurred earlier
+                    doit = false;
+                }
+
+                if (result.numFaces == 0)
+                {
+                    spdlog::error("[BoolProcess()] bool aborted due to empty source or target");
+
+                    // bail out because we will get strange meshes
+                    // if this happens, probably there's an issue parsing the mesh that occurred earlier
+                    break;
+                }
+
+                if (doit)
+                {
+                    IfcGeometry secondOperator;
+
+                    if (secondGeom.halfSpace)
+                    {
+                        glm::dvec3 origin = secondGeom.halfSpaceOrigin;
+                        glm::dvec3 x = secondGeom.halfSpaceX - origin;
+                        glm::dvec3 y = secondGeom.halfSpaceY - origin;
+                        glm::dvec3 z = secondGeom.halfSpaceZ - origin;
+                        glm::dmat4 trans = glm::dmat4(
+                            glm::dvec4(x, 0),
+                            glm::dvec4(y, 0),
+                            glm::dvec4(z, 0),
+                            glm::dvec4(0, 0, 0, 1)
+                        );
+
+                        double scaleX = 1;
+                        double scaleY = 1;
+                        double scaleZ = 1;
+
+                        for (uint32_t i = 0; i < result.numPoints; i++)
+                        {
+                            glm::dvec3 p = result.GetPoint(i);
+                            glm::dvec3 vec = (p - origin);
+                            double dx = glm::dot(vec, x);
+                            double dy = glm::dot(vec, y);
+                            double dz = glm::dot(vec, z);
+                            if (glm::abs(dx) > scaleX) {scaleX = glm::abs(dx); }
+                            if (glm::abs(dy) > scaleY) {scaleY = glm::abs(dy); }
+                            if (glm::abs(dz) > scaleZ) {scaleZ = glm::abs(dz); }
+                        }
+                        secondOperator.AddGeometry(secondGeom, trans, scaleX * 2, scaleY * 2, scaleZ * 2, secondGeom.halfSpaceOrigin);
+                    } else {
+                        secondOperator = secondGeom;
+                    }
+
+                    #ifdef CSG_DEBUG_OUTPUT
+                        io::DumpIfcGeometry(secondOperator, "second.obj");
+                    #endif
+
+                    #ifdef CSG_DEBUG_OUTPUT
+                        io::DumpIfcGeometry(result, "first.obj");
+                    #endif
+
+                    if (op == "DIFFERENCE")
+                    {
+                        result = Difference(result, secondOperator);
+                    }
+                    else if (op == "UNION")
+                    {
+                        result = Union(result, secondOperator);
+                    }
+
+                    #ifdef CSG_DEBUG_OUTPUT
+                        io::DumpIfcGeometry(result, "result.obj");
+                    #endif
+                }
+            }
+            finalResult.AddGeometry(result);
+        }
+
+        return finalResult;
+    }
+
+    IfcGeometry booleanManager::Union(IfcGeometry firstOperator, IfcGeometry secondOperator)
+    {        
+        fuzzybools::Geometry firstEngGeom = convertToEngine(firstOperator);
+        fuzzybools::Geometry secondEngGeom = convertToEngine(secondOperator);
+        return convertToWebIfc(fuzzybools::Union(firstEngGeom, secondEngGeom));
+    }
+
+    IfcGeometry booleanManager::Difference(IfcGeometry firstOperator, IfcGeometry secondOperator)
+    {
+        fuzzybools::Geometry firstEngGeom = convertToEngine(firstOperator);
+        fuzzybools::Geometry secondEngGeom = convertToEngine(secondOperator);
+        return convertToWebIfc(fuzzybools::Difference(firstEngGeom, secondEngGeom));
     }
 
 }
