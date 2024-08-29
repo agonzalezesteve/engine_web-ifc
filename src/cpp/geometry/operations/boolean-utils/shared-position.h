@@ -1007,6 +1007,39 @@ namespace fuzzybools
 
         //============================================================================================
 
+        void AddGeometryA(const Geometry &geom)
+        {
+            for (size_t i = 0; i < geom.numFaces; i++)
+            {
+                Face tri = geom.GetFace(i);
+                auto a = geom.GetPoint(tri.i0);
+                auto b = geom.GetPoint(tri.i1);
+                auto c = geom.GetPoint(tri.i2);
+
+                glm::dvec3 norm;
+                if (computeSafeNormal(a, b, c, norm, EPS_SMALL))
+                {
+                    auto ia = AddPoint(a);
+                    auto ib = AddPoint(b);
+                    auto ic = AddPoint(c);
+
+                    double da = glm::dot(norm, a);
+                    double db = glm::dot(norm, b);
+                    double dc = glm::dot(norm, c);
+
+                    size_t planeId = AddPlane(norm, da);
+
+                    planes[planeId].AddPoint(a);
+                    planes[planeId].AddPoint(b);
+                    planes[planeId].AddPoint(c);
+
+                    A.AddFace(planeId, ia, ib, ic);
+                }
+            }
+        }
+
+        //============================================================================================
+
         std::vector<size_t> GetPointsOnPlane(Plane &p)
         {
             auto cp = planeToPoints[p.id];

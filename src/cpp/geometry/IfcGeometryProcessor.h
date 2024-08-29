@@ -30,7 +30,7 @@ namespace webifc::geometry
       fuzzybools::Geometry convertToEngine(Geometry geom);
       IfcGeometry convertToWebIfc(fuzzybools::Geometry geom);
       IfcGeometry Union(IfcGeometry firstOperator, IfcGeometry secondOperator);
-      IfcGeometry Subtract(IfcGeometry firstOperator, IfcGeometry secondOperator);
+      IfcGeometry Difference(IfcGeometry firstOperator, IfcGeometry secondOperator);
   };
 
   class IfcGeometryProcessor 

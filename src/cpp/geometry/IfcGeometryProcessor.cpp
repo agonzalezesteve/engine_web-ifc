@@ -1682,7 +1682,7 @@ namespace webifc::geometry
 
                     if (op == "DIFFERENCE")
                     {
-                        result = Subtract(result, secondOperator);
+                        result = Difference(result, secondOperator);
                     }
                     else if (op == "UNION")
                     {
@@ -1707,11 +1707,11 @@ namespace webifc::geometry
         return convertToWebIfc(fuzzybools::Union(firstEngGeom, secondEngGeom));
     }
 
-    IfcGeometry booleanManager::Subtract(IfcGeometry firstOperator, IfcGeometry secondOperator)
+    IfcGeometry booleanManager::Difference(IfcGeometry firstOperator, IfcGeometry secondOperator)
     {
         fuzzybools::Geometry firstEngGeom = convertToEngine(firstOperator);
         fuzzybools::Geometry secondEngGeom = convertToEngine(secondOperator);
-        return convertToWebIfc(fuzzybools::Subtract(firstEngGeom, secondEngGeom));
+        return convertToWebIfc(fuzzybools::Difference(firstEngGeom, secondEngGeom));
     }
 
 }

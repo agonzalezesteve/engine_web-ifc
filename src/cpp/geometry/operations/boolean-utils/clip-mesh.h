@@ -113,4 +113,70 @@ namespace fuzzybools
 
         return booleanResult;
     }
+
+    static std::pair<Geometry, std::pair<Geometry, Geometry>> SplitFirstBoundary(Geometry &mesh, BVH &bvh1, BVH &bvh2)
+    {
+        std::pair<Geometry, std::pair<Geometry, Geometry>> result;
+
+        for (uint32_t i = 0; i < mesh.numFaces; i++)
+        {
+            Face tri = mesh.GetFace(i);
+            glm::dvec3 a = mesh.GetPoint(tri.i0);
+            glm::dvec3 b = mesh.GetPoint(tri.i1);
+            glm::dvec3 c = mesh.GetPoint(tri.i2);
+
+            glm::dvec3 triCenter = (a + b + c) * 1.0 / 3.0;
+            glm::dvec3 n = computeNormal(a, b, c);
+            auto isInside1Result = isInsideMesh(triCenter, n, *bvh1.ptr, bvh1);
+            auto isInside2Result = isInsideMesh(triCenter, n, *bvh2.ptr, bvh2);
+
+            if (isInside1Result.loc == MeshLocation::BOUNDARY)
+            {
+                auto dot = glm::dot(n, isInside1Result.normal);
+
+                switch (isInside2Result.loc)
+                {
+                case MeshLocation::BOUNDARY:
+                {
+                    if (dot < 0)
+                    {
+                        result.first.AddFace(b, a, c);
+                    }
+                    else
+                    {
+                        result.first.AddFace(a, b, c);
+                    }
+                    break;
+                }
+                case MeshLocation::OUTSIDE:
+                {
+                    if (dot < 0)
+                    {
+                        result.second.first.AddFace(b, a, c);
+                    }
+                    else
+                    {
+                        result.second.first.AddFace(a, b, c);
+                    }
+                    break;
+                }
+                case MeshLocation::INSIDE:
+                {
+                    if (dot < 0)
+                    {
+                        result.second.second.AddFace(b, a, c);
+                    }
+                    else
+                    {
+                        result.second.second.AddFace(a, b, c);
+                    }
+                }
+                default:
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
 }
