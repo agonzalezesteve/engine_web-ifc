@@ -21,7 +21,7 @@ namespace fuzzybools
             return left == 0 && right == 0;
         }
 
-        bool Overlaps(const BVHNode& other) const
+        bool Overlaps(const BVHNode &other) const
         {
             return box.intersects(other.box);
         }
@@ -32,10 +32,10 @@ namespace fuzzybools
         AABB box;
         std::vector<AABB> boxes;
         std::vector<BVHNode> nodes;
-        Geometry const* ptr;
+        Geometry const *ptr;
 
         template <typename T>
-        void Intersect(const BVH& other, T callback)
+        void Intersect(const BVH &other, T callback)
         {
             std::stack<std::pair<uint32_t, uint32_t>> bvhStack;
             bvhStack.emplace(0, 0);
@@ -45,8 +45,8 @@ namespace fuzzybools
                 const auto [i1, i2] = bvhStack.top();
                 bvhStack.pop();
 
-                auto& n1 = nodes[i1];
-                auto& n2 = other.nodes[i2];
+                auto &n1 = nodes[i1];
+                auto &n2 = other.nodes[i2];
 
                 if (n1.Overlaps(n2))
                 {
@@ -89,7 +89,7 @@ namespace fuzzybools
         }
 
         template <typename T>
-        bool IntersectRay(const glm::dvec3& origin, const glm::dvec3& dir, T callback)
+        bool IntersectRay(const glm::dvec3 &origin, const glm::dvec3 &dir, T callback)
         {
             std::stack<uint32_t> stack;
 
@@ -101,7 +101,7 @@ namespace fuzzybools
             stack.push(0);
             while (!stack.empty())
             {
-                const auto& node = nodes[stack.top()];
+                const auto &node = nodes[stack.top()];
                 stack.pop();
 
                 if (node.box.Intersect(origin, dir))
@@ -112,7 +112,7 @@ namespace fuzzybools
                         // check boxes
                         for (uint32_t i = node.start; i < node.end; i++)
                         {
-                            const auto& box = boxes[i];
+                            const auto &box = boxes[i];
                             if (box.Intersect(origin, dir))
                             {
                                 if (callback(box.index))
@@ -141,15 +141,14 @@ namespace fuzzybools
 
             return false;
         }
-
     };
 
-    static int MakeBVH(std::vector<AABB>& boxes, std::vector<BVHNode>& nodes, int start, int end, int axis, int depth, int& offset)
+    static int MakeBVH(std::vector<AABB> &boxes, std::vector<BVHNode> &nodes, int start, int end, int axis, int depth, int &offset)
     {
         int nodeID = offset++;
 
         nodes.resize(nodeID + 1);
-        BVHNode& node = nodes[nodeID];
+        BVHNode &node = nodes[nodeID];
 
         node.start = start;
         node.end = end;
@@ -166,7 +165,6 @@ namespace fuzzybools
             return nodeID;
         }
 
-
         int size = end - start;
 
         // ignore cubes
@@ -177,10 +175,8 @@ namespace fuzzybools
 
         int middle = (end + start) / 2;
 
-        std::nth_element(boxes.begin() + start, boxes.begin() + middle, boxes.begin() + end, [&](const AABB& first, const AABB& second)
-            {
-                return first.center[axis] > second.center[axis];
-            });
+        std::nth_element(boxes.begin() + start, boxes.begin() + middle, boxes.begin() + end, [&](const AABB &first, const AABB &second)
+                         { return first.center[axis] > second.center[axis]; });
 
         nodes[nodeID].left = MakeBVH(boxes, nodes, start, middle, (axis + 1) % 3, depth + 1, offset);
         nodes[nodeID].right = MakeBVH(boxes, nodes, middle, end, (axis + 1) % 3, depth + 1, offset);
@@ -188,7 +184,7 @@ namespace fuzzybools
         return nodeID;
     }
 
-    static BVH MakeBVH(const Geometry& mesh)
+    static BVH MakeBVH(const Geometry &mesh)
     {
         BVH bvh;
         bvh.ptr = &mesh;

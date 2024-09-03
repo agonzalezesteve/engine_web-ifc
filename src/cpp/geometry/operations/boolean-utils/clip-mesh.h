@@ -20,7 +20,7 @@ namespace fuzzybools
         DIFFERENCE
     };
 
-    static Geometry clipBooleanResult(const BooleanOperator op, Geometry &mesh, BVH &bvh1, BVH &bvh2)
+    static Geometry ClipBooleanResult(const BooleanOperator op, Geometry &mesh, BVH &bvh1, BVH &bvh2)
     {
         Geometry booleanResult;
 

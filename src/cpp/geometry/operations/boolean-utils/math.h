@@ -8,9 +8,6 @@
 
 namespace fuzzybools
 {
-//============================================================================================
-
-//	Original web-ifc version
 	static bool computeSafeNormal(const glm::dvec3 v1, const glm::dvec3 v2, const glm::dvec3 v3, glm::dvec3& normal, double eps = 0)
 	{
 		glm::dvec3 v12(v2 - v1);
@@ -35,63 +32,6 @@ namespace fuzzybools
 		return true;
 	}
 
-
-//============================================================================================
-
-/*	Unused function
-
-        This experimental version potentially is superior when the coordinates are large, as can happen, for example,
-        when global coordinates are used in a Mercator projection.  The calculation of vector products involves
-        subtractions that lead to loss of precision for large numbers.  Rather than singling out one vertex,
-        as in the original function, this version uses all three vertices and computes three estimates of the normal.
-        Hopefully averaging the normals leads to a more robust estimate.
-        
-	static bool computeSafeNormal(const glm::dvec3 v1, const glm::dvec3 v2, const glm::dvec3 v3, glm::dvec3& normal, double eps = 0.0)
-	{
-		glm::dvec3 temp = glm::cross(v1, v2) + glm::cross(v2, v3) + glm::cross(v3, v1);
-		double len = glm::length(temp);
-		//normal = temp;
-		normal = glm::dvec3(0.0, 0.0, 1.0);
-
-		if (std::isnan(len) || len <= eps)
-		{
-			return false;
-		}
-		normal = glm::normalize(temp);	
-		return true;
-	}
-*/
-
-//============================================================================================
-
-/*	Unused function
-
-        This function is a second attempt to reduce the errors caused by loss of precision when subtracting large
-        numbers.  It computes the centroid of the vertices, and then the normals for the three triangles
-        formed by an edge and the centroid.  The three normals are averaged and returned as the "safe normal".
-        
-        static bool computeSafeNormal(const glm::dvec3 v1, const glm::dvec3 v2, const glm::dvec3 v3, glm::dvec3& normal, double eps = 0.0)
-	{
-		glm::dvec3 centroid((v1 + v2 + v3)/3.0);
-		glm::dvec3 a(v1 - centroid);
-		glm::dvec3 b(v2 - centroid);
-		glm::dvec3 c(v3 - centroid);
-		
-		glm::dvec3 temp = glm::cross(a,b) + glm::cross(b,c) + glm::cross(c,a);
-		double len = glm::length(temp);
-		normal = temp;
-
-		if (std::isnan(len) || len <= eps)
-		{
-			return false;
-		}
-		normal = glm::normalize(temp);	
-		return true;
-	}
-*/	
-
-//============================================================================================
-
 	static glm::dvec3 computeNormal(const glm::dvec3 v1, const glm::dvec3 v2, const glm::dvec3 v3)
 	{
 		glm::dvec3 v12(v2 - v1);
@@ -105,20 +45,14 @@ namespace fuzzybools
 		return glm::normalize(norm);
 	}
 
-//============================================================================================
-
 	static bool IsInsideCenterExtents(const glm::dvec3& pt, const glm::dvec3& center, const glm::dvec3& extents)
 	{
 		glm::dvec3 delta = pt - center;
 		delta = glm::abs(delta);
 		glm::dvec3 offset = delta - extents;
-		return offset.x < toleranceIsInsideCenterExtents &&
-		       offset.y < toleranceIsInsideCenterExtents &&
-		       offset.z < toleranceIsInsideCenterExtents;
-	}
-	
-//============================================================================================
 
+		return offset.x < EPS_SMALL && offset.y < EPS_SMALL&& offset.z < EPS_SMALL;
+	}
 	static double areaOfTriangle(glm::dvec3 a, glm::dvec3 b, glm::dvec3 c)
 	{
 		glm::dvec3 ab = b - a;
@@ -128,63 +62,45 @@ namespace fuzzybools
 		return glm::length(norm) / 2;
 	}
 
-//============================================================================================
-
 	static bool MatrixFlipsTriangles(const glm::dmat4& mat)
 	{
 		return glm::determinant(mat) < 0;
 	}
-
-//============================================================================================
 
 	static bool MatrixFlipsTriangles(const glm::dmat3& mat)
 	{
 		return glm::determinant(mat) < 0;
 	}
 
-//============================================================================================
-
 	static bool equals2d(glm::dvec2 A, glm::dvec2 B, double eps = 0)
 	{
 		return std::fabs(A.x - B.x) <= eps && std::fabs(A.y - B.y) <= eps;
 	}
-
-//============================================================================================
 
 	static bool equals(glm::dvec3 A, glm::dvec3 B, double eps = 0)
 	{
 		return std::fabs(A.x - B.x) <= eps && std::fabs(A.y - B.y) <= eps && std::fabs(A.z - B.z) <= eps;
 	}
 
-//============================================================================================
-
 	static bool equals(double A, double B, double eps = 0)
 	{
 		return std::fabs(A - B) <= eps;
 	}
-
-//============================================================================================
 
 	static double sign2D(const glm::dvec2& p, const glm::dvec2& a, const glm::dvec2& b)
 	{
 		return (p.x - b.x) * (a.y - b.y) - (a.x - b.x) * (p.y - b.y);
 	}
 
-//============================================================================================
-
 	static double cross2d(const glm::dvec2& point1, const glm::dvec2& point2) {
 		return point1.x * point2.y - point1.y * point2.x;
 	}
-
-//============================================================================================
 
 	// https://stackoverflow.com/questions/1903954/is-there-a-standard-sign-function-signum-sgn-in-c-c
 	static double signOneZero(double x)
 	{
 		return (x > 0) - (x < 0);
 	}
-
-//============================================================================================
 
 	static double ComparableAngle(const glm::dvec2& p, const glm::dvec2& a, const glm::dvec2& b)
 	{
@@ -193,14 +109,10 @@ namespace fuzzybools
 		return upDown * dot;
 	}
 
-//============================================================================================
-
 	static bool allEqual(bool b1, bool b2, bool b3, bool b4)
 	{
 		return b1 == b2 && b1 == b3 && b1 == b4;
 	}
-
-//============================================================================================
 
 	struct LineLineIsect2D
 	{
@@ -208,8 +120,6 @@ namespace fuzzybools
 		glm::dvec2 pt;
 		double dist;
 	};
-
-//============================================================================================
 
 	static LineLineIsect2D doLineSegmentsIntersect(const glm::dvec2& p, const glm::dvec2& p2, const glm::dvec2& q, const glm::dvec2& q2, double eps) 
 	{
@@ -222,7 +132,7 @@ namespace fuzzybools
 		double denominator = cross2d(r, s);
 
 		if (uNumerator == 0 && denominator == 0) {
-			// They are collinear
+			// They are coLlinear
 
 			// Do they touch? (Are any of the points equal?)
 			if (equals2d(p, q, eps) || equals2d(p, q2, eps) || equals2d(p2, q, eps) || equals2d(p2, q2, eps))
@@ -248,7 +158,7 @@ namespace fuzzybools
 		}
 
 		if (denominator == 0) {
-			// lines are parallel
+			// lines are paralell
 			result.isect = false;
 			
 			return result;
@@ -264,8 +174,6 @@ namespace fuzzybools
 		return result;
 	}
 
-//============================================================================================
-
 	struct LineLineIsect
 	{
 		double param1;
@@ -274,8 +182,6 @@ namespace fuzzybools
 		glm::dvec3 point2;
 		double distance;
 	};
-
-//============================================================================================
 
 	static LineLineIsect LineLineIntersection(const glm::dvec3& P0, const glm::dvec3& P1,
 		const glm::dvec3& Q0, const glm::dvec3& Q1)
@@ -514,15 +420,11 @@ namespace fuzzybools
 		return result;
 	}
 
-//============================================================================================
-
 	struct PlanePlaneIsectResult
 	{
 		glm::dvec3 pos;
 		glm::dvec3 dir;
 	};
-
-//============================================================================================
 
 	inline PlanePlaneIsectResult PlanePlaneIsect(const glm::dvec3& norm1, double d1, const glm::dvec3& norm2, double d2)
 	{
@@ -542,8 +444,6 @@ namespace fuzzybools
 		return result;
 	}
 
-//============================================================================================
-
 	// https://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
 	static double DistancePointToLineSegment2D(const glm::dvec2& v, const glm::dvec2& w, const glm::dvec2& p)
 	{
@@ -559,23 +459,17 @@ namespace fuzzybools
 		return glm::distance(p, projection);
 	}
 
-//============================================================================================
-
 	static bool PointOnLineSegment2D(const glm::dvec2& v, const glm::dvec2& w, const glm::dvec2& p, double EPS)
 	{
 		double dist = DistancePointToLineSegment2D(v, w, p);
 		return dist <= EPS;
 	}
 
-//============================================================================================
-
 	static bool onEdge2D(const glm::dvec2& p, const glm::dvec2& a, const glm::dvec2& b, double EPS)
 	{
 		double dist = std::fabs(sign2D(p, a, b));
 		return dist <= EPS;
 	}
-
-//============================================================================================
 
 	static bool IsVectorCCW(const std::vector<glm::dvec2>& points)
 	{
@@ -592,8 +486,6 @@ namespace fuzzybools
 		return sum < 0;
 	}
 
-//============================================================================================
-
 	static double areaOfTriangle(glm::dvec2 a, glm::dvec2 b, glm::dvec2 c)
 	{
 		glm::dvec2 ab = b - a;
@@ -602,8 +494,6 @@ namespace fuzzybools
 		double norm = cross2d(ab, ac) / 2;
 		return std::fabs(norm);
 	}
-
-//============================================================================================
 
 	// https://en.wikipedia.org/wiki/Barycentric_coordinate_system
 	static glm::dvec3 ToBary(const glm::dvec3& a, const glm::dvec3& b, const glm::dvec3& c, const glm::dvec3& pt)
@@ -629,17 +519,12 @@ namespace fuzzybools
 		return glm::dvec3(w, u, v);
 	}
 
-//============================================================================================
-
 	static glm::dvec2 FromBary(const glm::dvec2& a, const glm::dvec2& b, const glm::dvec2& c, const glm::dvec3& pt)
 	{
 		return pt.x * a + pt.y * b + pt.z * c;
 	}
 
-//============================================================================================
-
 	// assume 0,0 1,0 0,1 triangle
-
 	static glm::dvec3 ToBary2(const glm::dvec2& pt)
 	{
 		double v = pt.x;
@@ -649,14 +534,10 @@ namespace fuzzybools
 		return glm::dvec3(u, v, w);
 	}
 
-//============================================================================================
-
 	static glm::dvec3 FromBary(const glm::dvec3& a, const glm::dvec3& b, const glm::dvec3& c, const glm::dvec3& pt)
 	{
 		return pt.x * a + pt.y * b + pt.z * c;
 	}
-
-//============================================================================================
 
 	static double RandomDouble(double lo, double hi)
 	{

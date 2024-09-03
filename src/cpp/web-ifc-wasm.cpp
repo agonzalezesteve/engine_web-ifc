@@ -211,6 +211,9 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
             buildingElements.push_back(buildingElement);
 
             unionGeom = fuzzybools::Union(unionGeom, webifc::geometry::booleanManager::convertToEngine(buildingElementGeom));
+
+            size_t offset = 0;
+            msgCallback(fuzzybools::ToObj(unionGeom, offset));
         }
     }
 

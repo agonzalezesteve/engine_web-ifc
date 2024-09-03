@@ -16,7 +16,7 @@ namespace fuzzybools
 
 		auto geom = Normalize(sp);
 
-		return fuzzybools::clipBooleanResult(op, geom, bvh1, bvh2);
+		return fuzzybools::ClipBooleanResult(op, geom, bvh1, bvh2);
 	}
 
 	inline Geometry Union(const Geometry &A, const Geometry &B)
@@ -33,4 +33,5 @@ namespace fuzzybools
 	{
 		return fuzzybools::BooleanResult(BooleanOperator::DIFFERENCE, A, B);
 	}
+
 }
