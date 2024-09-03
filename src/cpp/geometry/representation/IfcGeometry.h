@@ -29,15 +29,15 @@ namespace webifc::geometry
     struct AABB
     {
         uint32_t index;
-        Vec min = Vec(DBL_MAX, DBL_MAX, DBL_MAX);
-        Vec max = Vec(-DBL_MAX, -DBL_MAX, -DBL_MAX);
-        Vec center = Vec();
+        glm::dvec3 min = glm::dvec3(DBL_MAX, DBL_MAX, DBL_MAX);
+        glm::dvec3 max = glm::dvec3(-DBL_MAX, -DBL_MAX, -DBL_MAX);
+        glm::dvec3 center = glm::dvec3();
 
         bool intersects(const AABB& other) const;
-        bool contains(const Vec& pos) const;
+        bool contains(const glm::dvec3& pos) const;
         void merge(const AABB& other);
         void merge(const glm::dvec3& other);
-        bool Intersect(const Vec& origin, const Vec& dir) const;
+        bool Intersect(const glm::dvec3& origin, const glm::dvec3& dir) const;
     };
 
 	struct Geometry

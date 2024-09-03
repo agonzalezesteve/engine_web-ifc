@@ -18,7 +18,7 @@ namespace webifc::geometry
 				max.z + eps >= other.min.z && other.max.z + eps >= min.z);
 	}
 
-	bool AABB::contains(const Vec &pos) const
+	bool AABB::contains(const glm::dvec3 &pos) const
 	{
 		double eps = EPS_BIG;
 		return pos.x + eps >= min.x && pos.x - eps <= max.x &&
@@ -38,10 +38,10 @@ namespace webifc::geometry
 		max = glm::max(max, other);
 	}
 
-	bool AABB::Intersect(const Vec &origin, const Vec &dir) const
+	bool AABB::Intersect(const glm::dvec3 &origin, const glm::dvec3 &dir) const
 	{
 		// r.dir is unit direction vector of ray
-		Vec dirfrac;
+		glm::dvec3 dirfrac;
 		dirfrac.x = 1.0 / dir.x;
 		dirfrac.y = 1.0 / dir.y;
 		dirfrac.z = 1.0 / dir.z;
@@ -145,8 +145,7 @@ namespace webifc::geometry
 		glm::dvec3 normal;
 
 		double area = fuzzybools::areaOfTriangle(a, b, c);
-		//			if (!computeSafeNormal(a, b, c, normal, EPS_SMALL))
-		if (!computeSafeNormal(a, b, c, normal, toleranceAddFace))
+		if (!computeSafeNormal(a, b, c, normal, EPS_SMALL))
 		{
 			// bail out, zero area triangle
 			if (messages)
@@ -176,8 +175,7 @@ namespace webifc::geometry
 		double area = areaOfTriangle(GetPoint(a), GetPoint(b), GetPoint(c));
 
 		glm::dvec3 normal;
-		//			if (!computeSafeNormal(GetPoint(a), GetPoint(b), GetPoint(c), normal, EPS_SMALL))
-		if (!computeSafeNormal(GetPoint(a), GetPoint(b), GetPoint(c), normal, toleranceAddFace))
+		if (!computeSafeNormal(GetPoint(a), GetPoint(b), GetPoint(c), normal, EPS_SMALL))
 		{
 			// bail out, zero area triangle
 			if (messages)
