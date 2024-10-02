@@ -58,7 +58,15 @@ namespace webifc::geometry
             SpaceOrBuilding spaceOrBuilding;
             spaceOrBuilding.id = spacesAndBuildings.size();
             spaceOrBuilding.geometry = spaceOrBuildingGeom;
-            spaceOrBuilding.isSpace = (spaceOrBuildingGeom.Volume() < 0);
+            if (spaceOrBuildingGeom.Volume() < 0)
+            {
+                spaceOrBuilding.geometry.Flip();
+                spaceOrBuilding.isSpace = true;
+            }
+            else
+            {
+                spaceOrBuilding.isSpace = false;
+            }
 
             spacesAndBuildings.push_back(spaceOrBuilding);
         }
@@ -383,7 +391,7 @@ namespace webifc::geometry
                     secondLevelBoundaries.push_back(secondLevelBoundary);
                 }
             }
-            
+
             CorrectInternalSecondLevelBoundaries(secondLevelBoundaries, buildingElement);
             AddVoids(buildingElement, buildingElements, secondLevelBoundaries);
         }
@@ -479,7 +487,8 @@ namespace webifc::geometry
             sp.AddGeometryA(contiguousAndCoplanarFaces);
 
             auto allContours = sp.A.GetContourSegments();
-            if (allContours.size() > 1) {
+            if (allContours.size() > 1)
+            {
                 continue;
             }
 
@@ -487,22 +496,25 @@ namespace webifc::geometry
             auto contours = it->second;
 
             std::map<size_t, size_t> countMap;
-            for (const auto& pair: contours) {
+            for (const auto &pair : contours)
+            {
                 countMap[pair.first]++;
                 countMap[pair.second]++;
             }
 
             size_t minCount = std::numeric_limits<size_t>::max();
             size_t maxCount = 0;
-            for (const auto& entry : countMap) {
+            for (const auto &entry : countMap)
+            {
                 minCount = std::min(minCount, entry.second);
                 maxCount = std::max(maxCount, entry.second);
             }
 
-            if (minCount != 2 || maxCount != 2) {
+            if (minCount != 2 || maxCount != 2)
+            {
                 continue;
             }
-            
+
             std::vector<bool> visited(contours.size(), false);
             for (int i = 0; i < contours.size(); ++i)
             {
