@@ -288,25 +288,25 @@ export declare class IfcAPI {
      * @param modelID model ID
      * @returns vector of all line IDs
      */
-    GetAllLines(modelID: Number): Vector<number>;
+    GetAllLines(modelID: number): Vector<number>;
     /**
      * Returns all crossSections in 2D contained in IFCSECTIONEDSOLID, IFCSECTIONEDSURFACE, IFCSECTIONEDSOLIDHORIZONTAL (IFC4x3 or superior)
      * @param modelID model ID
      * @returns Lists with the cross sections curves as sets of points
      */
-    GetAllCrossSections2D(modelID: Number): Array<CrossSection>;
+    GetAllCrossSections2D(modelID: number): Array<CrossSection>;
     /**
      * Returns all crossSections in 3D contained in IFCSECTIONEDSOLID, IFCSECTIONEDSURFACE, IFCSECTIONEDSOLIDHORIZONTAL (IFC4x3 or superior)
      * @param modelID model ID
      * @returns Lists with the cross sections curves as sets of points
      */
-    GetAllCrossSections3D(modelID: Number): Array<CrossSection>;
+    GetAllCrossSections3D(modelID: number): Array<CrossSection>;
     /**
      * Returns all alignments contained in the IFC model (IFC4x3 or superior)
      * @param modelID model ID
      * @returns Lists with horizontal and vertical curves as sets of points
      */
-    GetAllAlignments(modelID: Number): any;
+    GetAllAlignments(modelID: number): any;
     /**
      * Set the transformation matrix
      * @param modelID model ID
@@ -327,6 +327,10 @@ export declare class IfcAPI {
      * @param modelID Model handle retrieved by OpenModel, model must be closed after use
     */
     CloseModel(modelID: number): void;
+    /**
+     * Closes all models and frees all related memory. Please note that after calling this you must call Init() again to ensure web-ifc is in a working state.
+    */
+    Dispose(): void;
     /**
      * Streams meshes of a model with specific express id
      * @param modelID Model handle retrieved by OpenModel

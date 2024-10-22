@@ -40,7 +40,7 @@ namespace webifc::geometry
                 glm::dvec3 a = sp.points[triangle.a].location3D;
                 glm::dvec3 b = sp.points[triangle.b].location3D;
                 glm::dvec3 c = sp.points[triangle.c].location3D;
-                spaceOrBuildingGeom.AddFace(a, b, c);
+                spaceOrBuildingGeom.AddFace(a, c, b);
 
                 for (const auto &neigthbourTriangle : sp.A.GetNeighbourTriangles(triangle))
                 {
@@ -58,15 +58,7 @@ namespace webifc::geometry
             SpaceOrBuilding spaceOrBuilding;
             spaceOrBuilding.id = spacesAndBuildings.size();
             spaceOrBuilding.geometry = spaceOrBuildingGeom;
-            if (spaceOrBuildingGeom.Volume() < 0)
-            {
-                spaceOrBuilding.geometry.Flip();
-                spaceOrBuilding.isSpace = true;
-            }
-            else
-            {
-                spaceOrBuilding.isSpace = false;
-            }
+            spaceOrBuilding.isSpace = (spaceOrBuildingGeom.Volume() > 0);
 
             spacesAndBuildings.push_back(spaceOrBuilding);
         }
@@ -325,7 +317,7 @@ namespace webifc::geometry
                         continue;
 
                     double firstLevelBoundaryDistance = glm::dot(firstLevelBoundary.normal, firstLevelBoundary.point) - glm::dot(firstLevelBoundary.normal, otherFirstLevelBoundary.point);
-                    if (firstLevelBoundaryDistance < EPS_SMALL)
+                    if (firstLevelBoundaryDistance > EPS_SMALL)
                         continue;
 
                     auto intersectionAndDifferenceGeoms = SplitFirstBoundaryInIntersectionAndDifference(firstLevelBoundary.geometry, otherFirstLevelBoundary.geometry.Translate((float)firstLevelBoundaryDistance * firstLevelBoundary.normal));
@@ -333,9 +325,7 @@ namespace webifc::geometry
                     {
                         auto area = secondLevelBoundaryGeom.Area();
                         if (area < EPS_BIG2)
-                        {
                             continue;
-                        }
 
                         IfcInternalOrExternalEnum boundaryCondition = ((!spacesAndBuildings[firstLevelBoundary.space].isSpace || !spacesAndBuildings[otherFirstLevelBoundary.space].isSpace) ? IfcInternalOrExternalEnum::EXTERNAL : IfcInternalOrExternalEnum::INTERNAL);
 
