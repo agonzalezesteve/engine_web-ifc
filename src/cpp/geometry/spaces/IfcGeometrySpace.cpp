@@ -17,10 +17,10 @@ namespace webifc::geometry
         sp.AddGeometryA(unionGeom);
 
         std::vector<fuzzybools::Triangle> geomTriangles = sp.A.triangles;
-        std::vector<bool> visited(geomTriangles.size(), false);
+        std::vector<bool> isVisited(geomTriangles.size(), false);
         for (size_t triangleId = 0; triangleId < geomTriangles.size(); triangleId++)
         {
-            if (visited[triangleId])
+            if (isVisited[triangleId])
                 continue;
 
             fuzzybools::Geometry spaceOrBuildingGeom;
@@ -31,10 +31,10 @@ namespace webifc::geometry
             {
                 size_t currentId = q.front();
                 q.pop();
-                if (visited[currentId])
+                if (isVisited[currentId])
                     continue;
 
-                visited[currentId] = true;
+                isVisited[currentId] = true;
 
                 fuzzybools::Triangle triangle = geomTriangles[currentId];
                 glm::dvec3 a = sp.points[triangle.a].location3D;
@@ -47,7 +47,7 @@ namespace webifc::geometry
                     for (size_t i = 0; i < neigthbourTriangle.second.size(); i++)
                     {
                         size_t neighbourId = neigthbourTriangle.second[i];
-                        if (visited[neighbourId])
+                        if (isVisited[neighbourId])
                             continue;
 
                         q.push(neighbourId);
@@ -90,10 +90,10 @@ namespace webifc::geometry
         sp.AddGeometryA(geom);
 
         std::vector<fuzzybools::Triangle> geomTriangles = sp.A.triangles;
-        std::vector<bool> visited(geomTriangles.size(), false);
+        std::vector<bool> isVisited(geomTriangles.size(), false);
         for (size_t triangleId = 0; triangleId < geomTriangles.size(); triangleId++)
         {
-            if (visited[triangleId])
+            if (isVisited[triangleId])
                 continue;
 
             fuzzybools::Geometry newGeom;
@@ -104,10 +104,10 @@ namespace webifc::geometry
             {
                 size_t currentId = q.front();
                 q.pop();
-                if (visited[currentId])
+                if (isVisited[currentId])
                     continue;
 
-                visited[currentId] = true;
+                isVisited[currentId] = true;
 
                 fuzzybools::Triangle triangle = geomTriangles[currentId];
                 glm::dvec3 norm = sp.GetNormal(triangle);
@@ -126,7 +126,7 @@ namespace webifc::geometry
                         if (std::fabs(glm::dot(norm, sp.GetNormal(geomTriangles[neighbourId])) - 1) > EPS_BIG)
                             continue;
 
-                        if (visited[neighbourId])
+                        if (isVisited[neighbourId])
                             continue;
 
                         q.push(neighbourId);
@@ -236,60 +236,80 @@ namespace webifc::geometry
 
     void IfcGeometrySpace::AddVoids(const BuildingElement &buildingElement, const std::vector<BuildingElement> &buildingElements, std::vector<SecondLevelBoundary> &secondLevelBoundaries)
     {
-        for (size_t i = 0; i < buildingElement.voids.size(); ++i)
+        if (buildingElement.voids.size() == 0)
+            return;
+
+        std::vector<bool> isVisited(buildingElement.voids.size(), false);
+        int numVisited = 0;
+
+        auto secondLevelBoundaryId = secondLevelBoundaries.size() - 1;
+        while (true)
         {
-            auto voidElement = buildingElements[buildingElement.voids[i]];
+            auto &parentBoundary = secondLevelBoundaries[secondLevelBoundaryId];
+            if (parentBoundary.buildingElement != buildingElement.id)
+                break;
 
-            int secondLevelBoundaryId = secondLevelBoundaries.size() - 1;
-            bool exitLoop = false;
-            while (secondLevelBoundaryId >= 0 && !exitLoop)
+            switch (parentBoundary.boundaryCondition)
             {
-                auto parentBoundary = secondLevelBoundaries[secondLevelBoundaryId];
-                switch (parentBoundary.boundaryCondition)
+            case IfcInternalOrExternalEnum::INTERNAL:
+            case IfcInternalOrExternalEnum::EXTERNAL:
+            {
+
+                auto &otherParentBoundary = secondLevelBoundaries[secondLevelBoundaryId - 1];
+                double parentBoundaryDistance = glm::dot(parentBoundary.normal, parentBoundary.point) - glm::dot(parentBoundary.normal, otherParentBoundary.point);
+
+                for (size_t i = 0; i < buildingElement.voids.size(); ++i)
                 {
-                case IfcInternalOrExternalEnum::INTERNAL:
-                case IfcInternalOrExternalEnum::EXTERNAL:
-                {
-                    auto secondLevelBoundaryGeom = IntersectFirstBoundaryWithSecondGeometry(parentBoundary.geometry, voidElement.geometry);
-                    if (!secondLevelBoundaryGeom.IsEmpty())
-                    {
-                        SecondLevelBoundary secondLevelBoundary;
-                        secondLevelBoundary.id = secondLevelBoundaries.size();
-                        secondLevelBoundary.geometry = secondLevelBoundaryGeom;
-                        secondLevelBoundary.point = secondLevelBoundary.geometry.GetPoint(secondLevelBoundary.geometry.GetFace(0).i0);
-                        secondLevelBoundary.normal = parentBoundary.normal;
-                        secondLevelBoundary.buildingElement = voidElement.id;
-                        secondLevelBoundary.space = parentBoundary.space;
-                        secondLevelBoundary.boundaryCondition = parentBoundary.boundaryCondition;
-                        secondLevelBoundary.parentBoundary = parentBoundary.id;
-                        secondLevelBoundaries.push_back(secondLevelBoundary);
+                    if (isVisited[i])
+                        continue;
 
-                        auto otherParentBoundary = secondLevelBoundaries[secondLevelBoundaryId - 1];
-                        double parentBoundaryDistance = glm::dot(parentBoundary.normal, parentBoundary.point) - glm::dot(parentBoundary.normal, otherParentBoundary.point);
+                    auto voidElement = buildingElements[buildingElement.voids[i]];
+                    auto intersectionAndDifferenceGeoms = SplitFirstBoundaryInIntersectionAndDifference(parentBoundary.geometry, voidElement.geometry);
 
-                        SecondLevelBoundary otherSecondLevelBoundary;
-                        otherSecondLevelBoundary.id = secondLevelBoundaries.size();
-                        otherSecondLevelBoundary.geometry = secondLevelBoundary.geometry.Translate((float)parentBoundaryDistance * otherParentBoundary.normal);
-                        otherSecondLevelBoundary.geometry.Flip();
-                        otherSecondLevelBoundary.point = otherSecondLevelBoundary.geometry.GetPoint(otherSecondLevelBoundary.geometry.GetFace(0).i0);
-                        otherSecondLevelBoundary.normal = otherParentBoundary.normal;
-                        otherSecondLevelBoundary.buildingElement = voidElement.id;
-                        otherSecondLevelBoundary.space = otherParentBoundary.space;
-                        otherSecondLevelBoundary.boundaryCondition = otherParentBoundary.boundaryCondition;
-                        otherSecondLevelBoundary.parentBoundary = otherParentBoundary.id;
-                        secondLevelBoundaries.push_back(otherSecondLevelBoundary);
+                    auto innerBoundaryGeometry = intersectionAndDifferenceGeoms.first;
+                    if (innerBoundaryGeometry.IsEmpty())
+                        continue;
 
-                        exitLoop = true;
-                    }
+                    SecondLevelBoundary secondLevelBoundary;
+                    secondLevelBoundary.id = secondLevelBoundaries.size();
+                    secondLevelBoundary.geometry = innerBoundaryGeometry;
+                    secondLevelBoundary.point = secondLevelBoundary.geometry.GetPoint(secondLevelBoundary.geometry.GetFace(0).i0);
+                    secondLevelBoundary.normal = parentBoundary.normal;
+                    secondLevelBoundary.buildingElement = voidElement.id;
+                    secondLevelBoundary.space = parentBoundary.space;
+                    secondLevelBoundary.boundaryCondition = parentBoundary.boundaryCondition;
+                    secondLevelBoundary.parentBoundary = parentBoundary.id;
+                    secondLevelBoundaries.push_back(secondLevelBoundary);
 
-                    secondLevelBoundaryId -= 2;
-                    break;
+                    SecondLevelBoundary otherSecondLevelBoundary;
+                    otherSecondLevelBoundary.id = secondLevelBoundaries.size();
+                    otherSecondLevelBoundary.geometry = secondLevelBoundary.geometry.Translate((float)parentBoundaryDistance * otherParentBoundary.normal);
+                    otherSecondLevelBoundary.geometry.Flip();
+                    otherSecondLevelBoundary.point = otherSecondLevelBoundary.geometry.GetPoint(otherSecondLevelBoundary.geometry.GetFace(0).i0);
+                    otherSecondLevelBoundary.normal = otherParentBoundary.normal;
+                    otherSecondLevelBoundary.buildingElement = voidElement.id;
+                    otherSecondLevelBoundary.space = otherParentBoundary.space;
+                    otherSecondLevelBoundary.boundaryCondition = otherParentBoundary.boundaryCondition;
+                    otherSecondLevelBoundary.parentBoundary = otherParentBoundary.id;
+                    secondLevelBoundaries.push_back(otherSecondLevelBoundary);
+
+                    parentBoundary.geometry = intersectionAndDifferenceGeoms.second;
+                    otherParentBoundary.geometry = parentBoundary.geometry.Translate((float)parentBoundaryDistance * otherParentBoundary.normal);
+                    otherParentBoundary.geometry.Flip();
+
+                    isVisited[i] = true;
+                    numVisited += 1;
+
+                    if (numVisited == buildingElement.voids.size())
+                        return;
                 }
-                case IfcInternalOrExternalEnum::NOTDEFINED:
-                default:
-                    secondLevelBoundaryId -= 1;
-                    break;
-                }
+                secondLevelBoundaryId -= 2;
+                break;
+            }
+            case IfcInternalOrExternalEnum::NOTDEFINED:
+            default:
+                secondLevelBoundaryId -= 1;
+                break;
             }
         }
     }
@@ -505,36 +525,36 @@ namespace webifc::geometry
                 continue;
             }
 
-            std::vector<bool> visited(contours.size(), false);
+            std::vector<bool> isVisited(contours.size(), false);
             for (int i = 0; i < contours.size(); ++i)
             {
-                if (visited[i])
+                if (isVisited[i])
                     continue;
 
                 std::vector<size_t> wire;
 
                 wire.push_back(contours[i].first);
                 wire.push_back(contours[i].second);
-                visited[i] = true;
+                isVisited[i] = true;
 
                 bool isWireClosed = false;
                 while (!isWireClosed)
                 {
                     for (int j = i + 1; j < contours.size(); ++j)
                     {
-                        if (visited[j])
+                        if (isVisited[j])
                             continue;
 
                         if (contours[j].first == wire[wire.size() - 1])
                         {
                             TryAddPoint(contours[j].second, wire, sp.points, isWireClosed);
-                            visited[j] = true;
+                            isVisited[j] = true;
                             break;
                         }
                         else if (contours[j].second == wire[wire.size() - 1])
                         {
                             TryAddPoint(contours[j].first, wire, sp.points, isWireClosed);
-                            visited[j] = true;
+                            isVisited[j] = true;
                             break;
                         }
                     }

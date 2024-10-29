@@ -191,6 +191,8 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
     }
 
     auto geomLoader = manager.GetGeometryProcessor(modelID);
+    auto relVoids = geomLoader->GetLoader().GetRelVoids();
+    auto relElementAggregates = geomLoader->GetLoader().GetRelElementAggregates();
 
     fuzzybools::Geometry unionGeom;
 
@@ -198,12 +200,11 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
     std::vector<webifc::geometry::BuildingElement> buildingElements;
     for (auto &expressId : expressIds)
     {
-        auto mesh = geomLoader->GetFlatMesh(expressId, true);
+        auto buildingElementMesh = geomLoader->GetFlatMesh(expressId, true);
 
-        for (auto &meshGeom : mesh.geometries)
+        for (auto &buildingElementMeshGeom : buildingElementMesh.geometries)
         {
-            auto &geom = geomLoader->GetGeometry(meshGeom.geometryExpressID);
-            auto buildingElementGeom = geom.Transform(meshGeom.transformation);
+            auto buildingElementGeom = geomLoader->GetGeometry(buildingElementMeshGeom.geometryExpressID).Transform(buildingElementMeshGeom.transformation);
 
             webifc::geometry::BuildingElement buildingElement;
             buildingElement.id = expressId;
@@ -211,6 +212,50 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
             buildingElements.push_back(buildingElement);
 
             unionGeom = fuzzybools::Union(unionGeom, webifc::geometry::booleanManager::convertToEngine(buildingElementGeom));
+
+            auto relVoidsIt = relVoids.find(expressId);
+            auto relAggIt = relElementAggregates.find(expressId);
+
+            if (relAggIt != relElementAggregates.end() && !relAggIt->second.empty())
+            {
+                for (auto relAggExpressID : relAggIt->second)
+                {
+                    auto relVoidsIt2 = relVoids.find(relAggExpressID);
+                    if (relVoidsIt2 != relVoids.end() && !relVoidsIt2->second.empty())
+                    {
+                        if (relVoidsIt != relVoids.end() && !relVoidsIt->second.empty())
+                        {
+                            relVoidsIt->second.insert(relVoidsIt->second.end(), relVoidsIt2->second.begin(), relVoidsIt2->second.end());
+                        }
+                        else
+                        {
+                            relVoidsIt = relVoidsIt2;
+                        }
+                    }
+                }
+            }
+
+            auto buildingElementId = buildingElements.size() - 1;
+            if (relVoidsIt != relVoids.end() && !relVoidsIt->second.empty())
+            {
+                for (auto relVoidExpressID : relVoidsIt->second)
+                {
+                    auto voidMesh = geomLoader->GetFlatMesh(relVoidExpressID, false);
+
+                    for (auto &voidMeshGeom : voidMesh.geometries)
+                    {
+                        auto voidGeom = geomLoader->GetGeometry(voidMeshGeom.geometryExpressID).Transform(voidMeshGeom.transformation);
+
+                        webifc::geometry::BuildingElement voidBuildingElement;
+                        voidBuildingElement.id = relVoidExpressID;
+                        voidBuildingElement.geometry = webifc::geometry::booleanManager::convertToEngine(voidGeom);
+                        voidBuildingElement.isVoid = true;
+                        buildingElements.push_back(voidBuildingElement);
+
+                        buildingElements[buildingElementId].voids.push_back(buildingElements.size() - 1);
+                    }
+                }
+            }
         }
     }
 
