@@ -55,7 +55,7 @@ export const INTEGER = 10;
 /**
  * Settings for the IFCLoader
  * @property {boolean} COORDINATE_TO_ORIGIN - If true, the model will be translated to the origin.
- * @property {number} CIRCLE_SEGMENTS - Number of segments for circles. 
+ * @property {number} CIRCLE_SEGMENTS - Number of segments for circles.
  * @property {number} MEMORY_LIMIT - The amount of memory to be reserved for storing IFC data in memory
  * @property {number} TAPE_SIZE - Size of the tape for the loader.
  * @property {number} LINEWRITER_BUFFER - The number of lines to write to memory at a time when writing an IFC file.
@@ -205,7 +205,7 @@ export class IfcAPI {
     }
 
     /**
-    * Opens a set of models and returns model IDs 
+    * Opens a set of models and returns model IDs
     * @param dataSets Array of Buffers containing IFC data (bytes)
     * @param settings Settings for loading the model @see LoaderSettings
     * @returns Array of model IDs
@@ -442,7 +442,7 @@ export class IfcAPI {
             lineData.expressID = rawLineData.ID;
         } catch (e) {
             Log.error("Invalid IFC Line:" + expressID);
-            // throw an error when the line is defined 
+            // throw an error when the line is defined
             if (rawLineData.ID) {
                 throw e;
             } else {
@@ -485,7 +485,7 @@ export class IfcAPI {
     /**
      * Gets the next unused expressID
      * @param modelID Model handle retrieved by OpenModel
-     * @param expressID Starting expressID value 
+     * @param expressID Starting expressID value
      * @returns The next unused expressID starting from the value provided
      */
     GetNextExpressID(modelID: number, expressID: number): number {
@@ -534,7 +534,7 @@ export class IfcAPI {
     }
 
     /**
-     * Evaluates if a type is subtype of IfcElement 
+     * Evaluates if a type is subtype of IfcElement
      * @param type Type code
      * @returns True if subtype of Ifcelement, False if it is not subtype
      */
@@ -661,7 +661,7 @@ export class IfcAPI {
      * Get all line IDs of a specific ifc type
      * @param modelID model ID
      * @param type ifc type, @see IfcEntities
-     * @param includeInherited if true, also returns all inherited types 
+     * @param includeInherited if true, also returns all inherited types
      * @returns vector of line IDs
      */
     GetLineIDsWithType(modelID: number, type: number, includeInherited: boolean = false): Vector<number> {
@@ -687,7 +687,7 @@ export class IfcAPI {
     }
 
     /**
-     * Returns all crossSections in 2D contained in IFCSECTIONEDSOLID, IFCSECTIONEDSURFACE, IFCSECTIONEDSOLIDHORIZONTAL (IFC4x3 or superior) 
+     * Returns all crossSections in 2D contained in IFCSECTIONEDSOLID, IFCSECTIONEDSURFACE, IFCSECTIONEDSOLIDHORIZONTAL (IFC4x3 or superior)
      * @param modelID model ID
      * @returns Lists with the cross sections curves as sets of points
      */
@@ -717,7 +717,7 @@ export class IfcAPI {
     }
 
     /**
-     * Returns all crossSections in 3D contained in IFCSECTIONEDSOLID, IFCSECTIONEDSURFACE, IFCSECTIONEDSOLIDHORIZONTAL (IFC4x3 or superior) 
+     * Returns all crossSections in 3D contained in IFCSECTIONEDSOLID, IFCSECTIONEDSURFACE, IFCSECTIONEDSOLIDHORIZONTAL (IFC4x3 or superior)
      * @param modelID model ID
      * @returns Lists with the cross sections curves as sets of points
      */
@@ -876,7 +876,7 @@ export class IfcAPI {
     /**
      * Set the transformation matrix
      * @param modelID model ID
-     * @param transformationMatrix transformation matrix, flat 4x4 matrix as array[16] 
+     * @param transformationMatrix transformation matrix, flat 4x4 matrix as array[16]
      */
     SetGeometryTransformation(modelID: number, transformationMatrix: Array<number>) {
         if (transformationMatrix.length != 16) {
@@ -958,6 +958,8 @@ export class IfcAPI {
             space: number,
             buildingElement: string,
             geometry: IfcGeometry,
+            grossGeometry: IfcGeometry,
+            parentBoundary: number,
             boundaryCondition: string) => void,
         msgCallback: (msg: string) => void) {
         this.wasmModule.FindSpacesMesh(modelID, types, spaceCallback, boundaryCallback, msgCallback);

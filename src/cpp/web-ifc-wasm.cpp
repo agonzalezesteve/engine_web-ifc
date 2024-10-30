@@ -173,6 +173,23 @@ void StreamAllMeshes(uint32_t modelID, emscripten::val callback)
     StreamAllMeshesWithTypes(modelID, types, callback);
 }
 
+void RunBoundaryCallback(emscripten::val boundaryCallback, webifc::geometry::SecondLevelBoundary &secondLevelBoundary)
+{
+    webifc::geometry::IfcGeometry secondLevelBoundaryGeometry;
+    secondLevelBoundaryGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(secondLevelBoundary.geometry));
+
+    webifc::geometry::IfcGeometry secondLevelBoundaryGrossGeometry;
+    secondLevelBoundaryGrossGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(secondLevelBoundary.grossGeometry));
+
+    boundaryCallback(
+        secondLevelBoundary.space,
+        secondLevelBoundary.buildingElement,
+        secondLevelBoundaryGeometry,
+        secondLevelBoundaryGrossGeometry,
+        secondLevelBoundary.parentBoundary.value_or(-1),
+        secondLevelBoundary.boundaryConditionToString());
+}
+
 void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val spaceCallback, emscripten::val boundaryCallback, emscripten::val msgCallback)
 {
     if (!manager.IsModelOpen(modelID))
@@ -288,24 +305,11 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
         {
         case webifc::geometry::IfcInternalOrExternalEnum::INTERNAL:
         {
-
-            webifc::geometry::IfcGeometry secondLevelBoundaryGeometry;
-            secondLevelBoundaryGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(secondLevelBoundary.geometry));
-            boundaryCallback(
-                secondLevelBoundary.space,
-                secondLevelBoundary.buildingElement,
-                secondLevelBoundaryGeometry,
-                secondLevelBoundary.boundaryConditionToString());
+            RunBoundaryCallback(boundaryCallback, secondLevelBoundary);
 
             auto otherSecondLevelBoundary = secondLevelBoundaries[secondLevelBoundaryId + 1];
 
-            webifc::geometry::IfcGeometry otherSecondLevelBoundaryGeometry;
-            otherSecondLevelBoundaryGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(otherSecondLevelBoundary.geometry));
-            boundaryCallback(
-                otherSecondLevelBoundary.space,
-                otherSecondLevelBoundary.buildingElement,
-                otherSecondLevelBoundaryGeometry,
-                otherSecondLevelBoundary.boundaryConditionToString());
+            RunBoundaryCallback(boundaryCallback, otherSecondLevelBoundary);
 
             secondLevelBoundaryId += 2;
             break;
@@ -313,27 +317,12 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
         case webifc::geometry::IfcInternalOrExternalEnum::EXTERNAL:
         {
             if (spacesAndBuildings[secondLevelBoundary.space].isSpace)
-            {
-                webifc::geometry::IfcGeometry secondLevelBoundaryGeometry;
-                secondLevelBoundaryGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(secondLevelBoundary.geometry));
-                boundaryCallback(
-                    secondLevelBoundary.space,
-                    secondLevelBoundary.buildingElement,
-                    secondLevelBoundaryGeometry,
-                    secondLevelBoundary.boundaryConditionToString());
-            }
+                RunBoundaryCallback(boundaryCallback, secondLevelBoundary);
 
             auto otherSecondLevelBoundary = secondLevelBoundaries[secondLevelBoundaryId + 1];
+
             if (spacesAndBuildings[otherSecondLevelBoundary.space].isSpace)
-            {
-                webifc::geometry::IfcGeometry otherSecondLevelBoundaryGeometry;
-                otherSecondLevelBoundaryGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(otherSecondLevelBoundary.geometry));
-                boundaryCallback(
-                    otherSecondLevelBoundary.space,
-                    otherSecondLevelBoundary.buildingElement,
-                    otherSecondLevelBoundaryGeometry,
-                    otherSecondLevelBoundary.boundaryConditionToString());
-            }
+                RunBoundaryCallback(boundaryCallback, otherSecondLevelBoundary);
 
             secondLevelBoundaryId += 2;
             break;
@@ -341,15 +330,7 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
         case webifc::geometry::IfcInternalOrExternalEnum::NOTDEFINED:
         {
             if (spacesAndBuildings[secondLevelBoundary.space].isSpace)
-            {
-                webifc::geometry::IfcGeometry secondLevelBoundaryGeometry;
-                secondLevelBoundaryGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(secondLevelBoundary.geometry));
-                boundaryCallback(
-                    secondLevelBoundary.space,
-                    secondLevelBoundary.buildingElement,
-                    secondLevelBoundaryGeometry,
-                    secondLevelBoundary.boundaryConditionToString());
-            }
+                RunBoundaryCallback(boundaryCallback, secondLevelBoundary);
 
             secondLevelBoundaryId += 1;
             break;

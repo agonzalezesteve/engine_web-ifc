@@ -4700,7 +4700,7 @@ var require_web_ifc_mt = __commonJS({
         var proxiedFunctionTable = [_proc_exit, exitOnMainThread, _environ_get, _environ_sizes_get, _fd_close, _fd_fdstat_get, _fd_read, _fd_seek, _fd_write];
         var wasmImports;
         function assignWasmImports() {
-          wasmImports = { i: ___cxa_throw, Q: __abort_js, ga: __embind_finalize_value_array, r: __embind_finalize_value_object, L: __embind_register_bigint, ea: __embind_register_bool, p: __embind_register_class, o: __embind_register_class_constructor, c: __embind_register_class_function, da: __embind_register_emval, D: __embind_register_float, d: __embind_register_function, u: __embind_register_integer, l: __embind_register_memory_view, q: __embind_register_optional, E: __embind_register_std_string, z: __embind_register_std_wstring, ha: __embind_register_value_array, m: __embind_register_value_array_element, s: __embind_register_value_object, h: __embind_register_value_object_field, fa: __embind_register_void, W: __emscripten_get_now_is_monotonic, Z: __emscripten_init_main_thread_js, T: __emscripten_notify_mailbox_postmessage, V: __emscripten_receive_on_main_thread_js, B: __emscripten_thread_cleanup, Y: __emscripten_thread_mailbox_await, ca: __emscripten_thread_set_strongref, k: __emval_as, v: __emval_call, b: __emval_decref, H: __emval_get_global, w: __emval_get_method_caller, j: __emval_get_property, t: __emval_incref, G: __emval_instanceof, A: __emval_is_number, F: __emval_is_string, ia: __emval_new_array, g: __emval_new_cstring, x: __emval_new_object, f: __emval_run_destructors, n: __emval_set_property, e: __emval_take_value, J: __gmtime_js, K: __localtime_js, S: __tzset_js, C: _emscripten_check_blocking_allowed, X: _emscripten_date_now, ba: _emscripten_exit_with_live_runtime, y: _emscripten_get_now, R: _emscripten_resize_heap, $: _environ_get, aa: _environ_sizes_get, M: _exit, O: _fd_close, _: _fd_fdstat_get, P: _fd_read, I: _fd_seek, U: _fd_write, a: wasmMemory, N: _strftime_l };
+          wasmImports = { i: ___cxa_throw, Q: __abort_js, ga: __embind_finalize_value_array, s: __embind_finalize_value_object, L: __embind_register_bigint, ea: __embind_register_bool, q: __embind_register_class, p: __embind_register_class_constructor, c: __embind_register_class_function, da: __embind_register_emval, D: __embind_register_float, d: __embind_register_function, u: __embind_register_integer, l: __embind_register_memory_view, r: __embind_register_optional, E: __embind_register_std_string, z: __embind_register_std_wstring, ha: __embind_register_value_array, m: __embind_register_value_array_element, t: __embind_register_value_object, h: __embind_register_value_object_field, fa: __embind_register_void, W: __emscripten_get_now_is_monotonic, Z: __emscripten_init_main_thread_js, T: __emscripten_notify_mailbox_postmessage, V: __emscripten_receive_on_main_thread_js, B: __emscripten_thread_cleanup, Y: __emscripten_thread_mailbox_await, ca: __emscripten_thread_set_strongref, k: __emval_as, v: __emval_call, b: __emval_decref, H: __emval_get_global, w: __emval_get_method_caller, j: __emval_get_property, o: __emval_incref, G: __emval_instanceof, A: __emval_is_number, F: __emval_is_string, ia: __emval_new_array, g: __emval_new_cstring, x: __emval_new_object, f: __emval_run_destructors, n: __emval_set_property, e: __emval_take_value, J: __gmtime_js, K: __localtime_js, S: __tzset_js, C: _emscripten_check_blocking_allowed, X: _emscripten_date_now, ba: _emscripten_exit_with_live_runtime, y: _emscripten_get_now, R: _emscripten_resize_heap, $: _environ_get, aa: _environ_sizes_get, M: _exit, O: _fd_close, _: _fd_fdstat_get, P: _fd_read, I: _fd_seek, U: _fd_write, a: wasmMemory, N: _strftime_l };
         }
         var wasmExports = createWasm();
         var ___wasm_call_ctors = () => (___wasm_call_ctors = wasmExports["ja"])();
@@ -9075,7 +9075,7 @@ var require_web_ifc_node = __commonJS({
         init_emval();
         FS.createPreloadedFile = FS_createPreloadedFile;
         FS.staticInit();
-        var wasmImports = { h: ___cxa_throw, L: __abort_js, Y: __embind_finalize_value_array, q: __embind_finalize_value_object, H: __embind_register_bigint, W: __embind_register_bool, o: __embind_register_class, n: __embind_register_class_constructor, b: __embind_register_class_function, V: __embind_register_emval, z: __embind_register_float, c: __embind_register_function, t: __embind_register_integer, k: __embind_register_memory_view, p: __embind_register_optional, A: __embind_register_std_string, x: __embind_register_std_wstring, Z: __embind_register_value_array, l: __embind_register_value_array_element, r: __embind_register_value_object, g: __embind_register_value_object_field, X: __embind_register_void, P: __emscripten_get_now_is_monotonic, U: __emscripten_memcpy_js, j: __emval_as, u: __emval_call, a: __emval_decref, D: __emval_get_global, v: __emval_get_method_caller, i: __emval_get_property, s: __emval_incref, C: __emval_instanceof, y: __emval_is_number, B: __emval_is_string, _: __emval_new_array, f: __emval_new_cstring, w: __emval_new_object, e: __emval_run_destructors, m: __emval_set_property, d: __emval_take_value, F: __gmtime_js, G: __localtime_js, N: __tzset_js, Q: _emscripten_date_now, M: _emscripten_resize_heap, S: _environ_get, T: _environ_sizes_get, J: _fd_close, R: _fd_fdstat_get, K: _fd_read, E: _fd_seek, O: _fd_write, I: _strftime_l };
+        var wasmImports = { h: ___cxa_throw, L: __abort_js, Y: __embind_finalize_value_array, r: __embind_finalize_value_object, H: __embind_register_bigint, W: __embind_register_bool, p: __embind_register_class, o: __embind_register_class_constructor, b: __embind_register_class_function, V: __embind_register_emval, z: __embind_register_float, c: __embind_register_function, t: __embind_register_integer, k: __embind_register_memory_view, q: __embind_register_optional, A: __embind_register_std_string, x: __embind_register_std_wstring, Z: __embind_register_value_array, l: __embind_register_value_array_element, s: __embind_register_value_object, g: __embind_register_value_object_field, X: __embind_register_void, P: __emscripten_get_now_is_monotonic, U: __emscripten_memcpy_js, j: __emval_as, u: __emval_call, a: __emval_decref, D: __emval_get_global, v: __emval_get_method_caller, i: __emval_get_property, n: __emval_incref, C: __emval_instanceof, y: __emval_is_number, B: __emval_is_string, _: __emval_new_array, f: __emval_new_cstring, w: __emval_new_object, e: __emval_run_destructors, m: __emval_set_property, d: __emval_take_value, F: __gmtime_js, G: __localtime_js, N: __tzset_js, Q: _emscripten_date_now, M: _emscripten_resize_heap, S: _environ_get, T: _environ_sizes_get, J: _fd_close, R: _fd_fdstat_get, K: _fd_read, E: _fd_seek, O: _fd_write, I: _strftime_l };
         var wasmExports = createWasm();
         var ___wasm_call_ctors = () => (___wasm_call_ctors = wasmExports["aa"])();
         var ___getTypeName = (a0) => (___getTypeName = wasmExports["ba"])(a0);
@@ -73106,7 +73106,7 @@ var IfcAPI2 = class {
     }
   }
   /**
-   * Opens a set of models and returns model IDs 
+   * Opens a set of models and returns model IDs
    * @param dataSets Array of Buffers containing IFC data (bytes)
    * @param settings Settings for loading the model @see LoaderSettings
    * @returns Array of model IDs
@@ -73362,7 +73362,7 @@ var IfcAPI2 = class {
   /**
    * Gets the next unused expressID
    * @param modelID Model handle retrieved by OpenModel
-   * @param expressID Starting expressID value 
+   * @param expressID Starting expressID value
    * @returns The next unused expressID starting from the value provided
    */
   GetNextExpressID(modelID, expressID) {
@@ -73406,7 +73406,7 @@ var IfcAPI2 = class {
     return this.wasmModule.GetTypeCodeFromName(typeName);
   }
   /**
-   * Evaluates if a type is subtype of IfcElement 
+   * Evaluates if a type is subtype of IfcElement
    * @param type Type code
    * @returns True if subtype of Ifcelement, False if it is not subtype
    */
@@ -73508,7 +73508,7 @@ var IfcAPI2 = class {
    * Get all line IDs of a specific ifc type
    * @param modelID model ID
    * @param type ifc type, @see IfcEntities
-   * @param includeInherited if true, also returns all inherited types 
+   * @param includeInherited if true, also returns all inherited types
    * @returns vector of line IDs
    */
   GetLineIDsWithType(modelID, type, includeInherited = false) {
@@ -73536,7 +73536,7 @@ var IfcAPI2 = class {
     return lineIds;
   }
   /**
-   * Returns all crossSections in 2D contained in IFCSECTIONEDSOLID, IFCSECTIONEDSURFACE, IFCSECTIONEDSOLIDHORIZONTAL (IFC4x3 or superior) 
+   * Returns all crossSections in 2D contained in IFCSECTIONEDSOLID, IFCSECTIONEDSURFACE, IFCSECTIONEDSOLIDHORIZONTAL (IFC4x3 or superior)
    * @param modelID model ID
    * @returns Lists with the cross sections curves as sets of points
    */
@@ -73565,7 +73565,7 @@ var IfcAPI2 = class {
     return crossSectionList;
   }
   /**
-   * Returns all crossSections in 3D contained in IFCSECTIONEDSOLID, IFCSECTIONEDSURFACE, IFCSECTIONEDSOLIDHORIZONTAL (IFC4x3 or superior) 
+   * Returns all crossSections in 3D contained in IFCSECTIONEDSOLID, IFCSECTIONEDSURFACE, IFCSECTIONEDSOLIDHORIZONTAL (IFC4x3 or superior)
    * @param modelID model ID
    * @returns Lists with the cross sections curves as sets of points
    */
@@ -73713,7 +73713,7 @@ var IfcAPI2 = class {
   /**
    * Set the transformation matrix
    * @param modelID model ID
-   * @param transformationMatrix transformation matrix, flat 4x4 matrix as array[16] 
+   * @param transformationMatrix transformation matrix, flat 4x4 matrix as array[16]
    */
   SetGeometryTransformation(modelID, transformationMatrix) {
     if (transformationMatrix.length != 16) {

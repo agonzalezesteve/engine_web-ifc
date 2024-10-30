@@ -273,6 +273,7 @@ namespace webifc::geometry
                     SecondLevelBoundary secondLevelBoundary;
                     secondLevelBoundary.id = secondLevelBoundaries.size();
                     secondLevelBoundary.geometry = innerBoundaryGeometry;
+                    secondLevelBoundary.grossGeometry = secondLevelBoundary.geometry;
                     secondLevelBoundary.point = secondLevelBoundary.geometry.GetPoint(secondLevelBoundary.geometry.GetFace(0).i0);
                     secondLevelBoundary.normal = parentBoundary.normal;
                     secondLevelBoundary.buildingElement = voidElement.id;
@@ -285,6 +286,7 @@ namespace webifc::geometry
                     otherSecondLevelBoundary.id = secondLevelBoundaries.size();
                     otherSecondLevelBoundary.geometry = secondLevelBoundary.geometry.Translate((float)parentBoundaryDistance * otherParentBoundary.normal);
                     otherSecondLevelBoundary.geometry.Flip();
+                    otherSecondLevelBoundary.grossGeometry = otherSecondLevelBoundary.geometry;
                     otherSecondLevelBoundary.point = otherSecondLevelBoundary.geometry.GetPoint(otherSecondLevelBoundary.geometry.GetFace(0).i0);
                     otherSecondLevelBoundary.normal = otherParentBoundary.normal;
                     otherSecondLevelBoundary.buildingElement = voidElement.id;
@@ -352,24 +354,24 @@ namespace webifc::geometry
                         SecondLevelBoundary secondLevelBoundary;
                         secondLevelBoundary.id = secondLevelBoundaries.size();
                         secondLevelBoundary.geometry = secondLevelBoundaryGeom;
+                        secondLevelBoundary.grossGeometry = secondLevelBoundary.geometry;
                         secondLevelBoundary.point = secondLevelBoundary.geometry.GetPoint(secondLevelBoundary.geometry.GetFace(0).i0);
                         secondLevelBoundary.normal = firstLevelBoundary.normal;
                         secondLevelBoundary.buildingElement = buildingElement.id;
                         secondLevelBoundary.space = firstLevelBoundary.space;
                         secondLevelBoundary.boundaryCondition = boundaryCondition;
-                        secondLevelBoundary.parentBoundary = -1;
                         secondLevelBoundaries.push_back(secondLevelBoundary);
 
                         SecondLevelBoundary otherSecondLevelBoundary;
                         otherSecondLevelBoundary.id = secondLevelBoundaries.size();
                         otherSecondLevelBoundary.geometry = secondLevelBoundary.geometry.Translate((float)firstLevelBoundaryDistance * otherFirstLevelBoundary.normal);
                         otherSecondLevelBoundary.geometry.Flip();
+                        otherSecondLevelBoundary.grossGeometry = otherSecondLevelBoundary.geometry;
                         otherSecondLevelBoundary.point = otherSecondLevelBoundary.geometry.GetPoint(otherSecondLevelBoundary.geometry.GetFace(0).i0);
                         otherSecondLevelBoundary.normal = otherFirstLevelBoundary.normal;
                         otherSecondLevelBoundary.buildingElement = buildingElement.id;
                         otherSecondLevelBoundary.space = otherFirstLevelBoundary.space;
                         otherSecondLevelBoundary.boundaryCondition = boundaryCondition;
-                        otherSecondLevelBoundary.parentBoundary = -1;
                         secondLevelBoundaries.push_back(otherSecondLevelBoundary);
 
                         if (area > maxArea)
@@ -392,12 +394,12 @@ namespace webifc::geometry
                     SecondLevelBoundary secondLevelBoundary;
                     secondLevelBoundary.id = secondLevelBoundaries.size();
                     secondLevelBoundary.geometry = secondLevelBoundaryGeom;
+                    secondLevelBoundary.grossGeometry = secondLevelBoundary.geometry;
                     secondLevelBoundary.point = secondLevelBoundary.geometry.GetPoint(secondLevelBoundary.geometry.GetFace(0).i0);
                     secondLevelBoundary.normal = firstLevelBoundary.normal;
                     secondLevelBoundary.buildingElement = buildingElement.id;
                     secondLevelBoundary.space = firstLevelBoundary.space;
                     secondLevelBoundary.boundaryCondition = IfcInternalOrExternalEnum::NOTDEFINED;
-                    secondLevelBoundary.parentBoundary = -1;
                     secondLevelBoundaries.push_back(secondLevelBoundary);
                 }
             }

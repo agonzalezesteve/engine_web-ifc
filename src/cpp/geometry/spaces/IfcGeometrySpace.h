@@ -10,6 +10,7 @@
 #include <vector>
 #include <string>
 #include <queue>
+#include <optional>
 #include <glm/vec3.hpp>
 
 #include "../representation/IfcGeometry.h"
@@ -38,10 +39,12 @@ namespace webifc::geometry
 
 	struct FirstLevelBoundary : GeometryWithId
 	{
+		size_t space;
+		size_t buildingElement;
+		fuzzybools::Geometry grossGeometry;
 		glm::vec3 point;
 		glm::vec3 normal;
-		size_t buildingElement;
-		size_t space;
+		std::optional<size_t> parentBoundary;
 	};
 
 	enum class IfcInternalOrExternalEnum
@@ -54,7 +57,6 @@ namespace webifc::geometry
 	struct SecondLevelBoundary : FirstLevelBoundary
 	{
 		IfcInternalOrExternalEnum boundaryCondition;
-		int parentBoundary;
 
 		std::string boundaryConditionToString() const
 		{
