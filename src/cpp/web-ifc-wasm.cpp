@@ -186,7 +186,6 @@ void RunBoundaryCallback(emscripten::val boundaryCallback, webifc::geometry::Sec
         secondLevelBoundary.buildingElement,
         secondLevelBoundaryGeometry,
         secondLevelBoundaryGrossGeometry,
-        secondLevelBoundary.parentBoundary.value_or(-1),
         secondLevelBoundary.boundaryConditionToString());
 }
 

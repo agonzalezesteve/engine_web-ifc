@@ -44,7 +44,6 @@ namespace webifc::geometry
 		fuzzybools::Geometry grossGeometry;
 		glm::vec3 point;
 		glm::vec3 normal;
-		std::optional<size_t> parentBoundary;
 	};
 
 	enum class IfcInternalOrExternalEnum

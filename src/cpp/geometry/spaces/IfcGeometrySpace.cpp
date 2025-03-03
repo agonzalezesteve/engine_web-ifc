@@ -279,7 +279,6 @@ namespace webifc::geometry
                     secondLevelBoundary.buildingElement = voidElement.id;
                     secondLevelBoundary.space = parentBoundary.space;
                     secondLevelBoundary.boundaryCondition = parentBoundary.boundaryCondition;
-                    secondLevelBoundary.parentBoundary = parentBoundary.id;
                     secondLevelBoundaries.push_back(secondLevelBoundary);
 
                     SecondLevelBoundary otherSecondLevelBoundary;
@@ -292,7 +291,6 @@ namespace webifc::geometry
                     otherSecondLevelBoundary.buildingElement = voidElement.id;
                     otherSecondLevelBoundary.space = otherParentBoundary.space;
                     otherSecondLevelBoundary.boundaryCondition = otherParentBoundary.boundaryCondition;
-                    otherSecondLevelBoundary.parentBoundary = otherParentBoundary.id;
                     secondLevelBoundaries.push_back(otherSecondLevelBoundary);
 
                     parentBoundary.geometry = intersectionAndDifferenceGeoms.second;
