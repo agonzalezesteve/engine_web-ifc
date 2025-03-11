@@ -352,7 +352,7 @@ export declare class IfcAPI {
      * @param boundaryCallback callback function that is called for each boundary
      * @param msgCallback msgCallback
      */
-    FindSpacesMesh(modelID: number, types: Array<number>, spaceCallback: (geometry: IfcGeometry, isSpace: boolean) => void, boundaryCallback: (space: number, buildingElement: string, geometry: IfcGeometry, grossGeometry: IfcGeometry, parentBoundary: number, boundaryCondition: string) => void, msgCallback: (msg: string) => void): void;
+    FindSpacesMesh(modelID: number, types: Array<number>, spaceCallback: (geometry: IfcGeometry, isSpace: boolean) => void, boundaryCallback: (space: number, buildingElement: string, geometry: IfcGeometry, grossGeometry: IfcGeometry, boundaryCondition: string) => void, msgCallback: (msg: string) => void): void;
     /**
      * Streams all meshes of a model with a specific ifc type
      * @param modelID Model handle retrieved by OpenModel
