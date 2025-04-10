@@ -41,7 +41,6 @@ namespace webifc::geometry
 	{
 		size_t space;
 		size_t buildingElement;
-		fuzzybools::Geometry grossGeometry;
 		glm::vec3 point;
 		glm::vec3 normal;
 	};

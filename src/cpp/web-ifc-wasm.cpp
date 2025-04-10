@@ -178,14 +178,10 @@ void RunBoundaryCallback(emscripten::val boundaryCallback, webifc::geometry::Sec
     webifc::geometry::IfcGeometry secondLevelBoundaryGeometry;
     secondLevelBoundaryGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(secondLevelBoundary.geometry));
 
-    webifc::geometry::IfcGeometry secondLevelBoundaryGrossGeometry;
-    secondLevelBoundaryGrossGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(secondLevelBoundary.grossGeometry));
-
     boundaryCallback(
         secondLevelBoundary.space,
         secondLevelBoundary.buildingElement,
         secondLevelBoundaryGeometry,
-        secondLevelBoundaryGrossGeometry,
         secondLevelBoundary.boundaryConditionToString());
 }
 
