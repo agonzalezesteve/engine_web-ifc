@@ -18,27 +18,28 @@
 namespace webifc::geometry
 {
 
-	struct GeometryWithId
+	struct BuildingElement
 	{
 		size_t id;
 		fuzzybools::Geometry geometry;
-	};
-
-	struct BuildingElement : GeometryWithId
-	{
 		float thickness = 0.0;
 		std::vector<size_t> firstLevelBoundaries;
 		bool isVoid = false;
 		std::vector<size_t> voids;
 	};
 
-	struct SpaceOrBuilding : GeometryWithId
+	struct SpaceOrBuilding
 	{
+		size_t id;
+		fuzzybools::Geometry geometry;
 		bool isSpace;
 	};
 
-	struct FirstLevelBoundary : GeometryWithId
+	struct FirstLevelBoundary
 	{
+		size_t id;
+		fuzzybools::Geometry netGeometry;
+		fuzzybools::Geometry grossGeometry;
 		size_t space;
 		size_t buildingElement;
 		glm::vec3 point;

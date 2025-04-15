@@ -165,7 +165,8 @@ namespace webifc::geometry
 
                     FirstLevelBoundary firstLevelBoundary;
                     firstLevelBoundary.id = firstLevelBoundaries.size();
-                    firstLevelBoundary.geometry = firstLevelBoundaryGeom;
+                    firstLevelBoundary.netGeometry = firstLevelBoundaryGeom;
+                    firstLevelBoundary.grossGeometry = firstLevelBoundaryGeom;
                     firstLevelBoundary.point = a;
                     firstLevelBoundary.normal = norm;
                     firstLevelBoundary.buildingElement = buildingElement.id;
@@ -263,7 +264,7 @@ namespace webifc::geometry
                         continue;
 
                     auto voidElement = buildingElements[buildingElement.voids[i]];
-                    auto intersectionAndDifferenceGeoms = SplitFirstBoundaryInIntersectionAndDifference(parentBoundary.geometry, voidElement.geometry);
+                    auto intersectionAndDifferenceGeoms = SplitFirstBoundaryInIntersectionAndDifference(parentBoundary.netGeometry, voidElement.geometry);
 
                     auto innerBoundaryGeometry = intersectionAndDifferenceGeoms.first;
                     if (innerBoundaryGeometry.IsEmpty())
@@ -271,8 +272,9 @@ namespace webifc::geometry
 
                     SecondLevelBoundary secondLevelBoundary;
                     secondLevelBoundary.id = secondLevelBoundaries.size();
-                    secondLevelBoundary.geometry = innerBoundaryGeometry;
-                    secondLevelBoundary.point = secondLevelBoundary.geometry.GetPoint(secondLevelBoundary.geometry.GetFace(0).i0);
+                    secondLevelBoundary.netGeometry = innerBoundaryGeometry;
+                    secondLevelBoundary.grossGeometry = secondLevelBoundary.netGeometry;
+                    secondLevelBoundary.point = secondLevelBoundary.netGeometry.GetPoint(secondLevelBoundary.netGeometry.GetFace(0).i0);
                     secondLevelBoundary.normal = parentBoundary.normal;
                     secondLevelBoundary.buildingElement = voidElement.id;
                     secondLevelBoundary.space = parentBoundary.space;
@@ -281,21 +283,22 @@ namespace webifc::geometry
 
                     SecondLevelBoundary otherSecondLevelBoundary;
                     otherSecondLevelBoundary.id = secondLevelBoundaries.size();
-                    otherSecondLevelBoundary.geometry = secondLevelBoundary.geometry.Translate((float)parentBoundaryDistance * otherParentBoundary.normal);
-                    otherSecondLevelBoundary.geometry.Flip();
-                    otherSecondLevelBoundary.point = otherSecondLevelBoundary.geometry.GetPoint(otherSecondLevelBoundary.geometry.GetFace(0).i0);
+                    otherSecondLevelBoundary.netGeometry = secondLevelBoundary.netGeometry.Translate((float)parentBoundaryDistance * otherParentBoundary.normal);
+                    otherSecondLevelBoundary.netGeometry.Flip();
+                    otherSecondLevelBoundary.grossGeometry = otherSecondLevelBoundary.netGeometry;
+                    otherSecondLevelBoundary.point = otherSecondLevelBoundary.netGeometry.GetPoint(otherSecondLevelBoundary.netGeometry.GetFace(0).i0);
                     otherSecondLevelBoundary.normal = otherParentBoundary.normal;
                     otherSecondLevelBoundary.buildingElement = voidElement.id;
                     otherSecondLevelBoundary.space = otherParentBoundary.space;
                     otherSecondLevelBoundary.boundaryCondition = otherParentBoundary.boundaryCondition;
                     secondLevelBoundaries.insert(secondLevelBoundaries.begin() + secondLevelBoundaryId + 2, otherSecondLevelBoundary);
 
-                    parentBoundary.geometry = intersectionAndDifferenceGeoms.second;
-                    otherParentBoundary.geometry = parentBoundary.geometry.Translate((float)parentBoundaryDistance * otherParentBoundary.normal);
-                    otherParentBoundary.geometry.Flip();
+                    parentBoundary.netGeometry = intersectionAndDifferenceGeoms.second;
+                    otherParentBoundary.netGeometry = parentBoundary.netGeometry.Translate((float)parentBoundaryDistance * otherParentBoundary.normal);
+                    otherParentBoundary.netGeometry.Flip();
 
-                    secondLevelBoundaries[secondLevelBoundaryId].geometry = parentBoundary.geometry;
-                    secondLevelBoundaries[secondLevelBoundaryId - 1].geometry = otherParentBoundary.geometry;
+                    secondLevelBoundaries[secondLevelBoundaryId].netGeometry = parentBoundary.netGeometry;
+                    secondLevelBoundaries[secondLevelBoundaryId - 1].netGeometry = otherParentBoundary.netGeometry;
 
                     isVisited[i] = true;
                     numVisited += 1;
@@ -327,7 +330,7 @@ namespace webifc::geometry
             for (size_t i = 0; i < buildingElement.firstLevelBoundaries.size(); i++)
             {
                 auto &firstLevelBoundary = firstLevelBoundaries[buildingElement.firstLevelBoundaries[i]];
-                if (firstLevelBoundary.geometry.IsEmpty())
+                if (firstLevelBoundary.netGeometry.IsEmpty())
                     continue;
 
                 for (size_t j = i + 1; j < buildingElement.firstLevelBoundaries.size(); j++)
@@ -340,7 +343,7 @@ namespace webifc::geometry
                     if (firstLevelBoundaryDistance > EPS_SMALL)
                         continue;
 
-                    auto intersectionAndDifferenceGeoms = SplitFirstBoundaryInIntersectionAndDifference(firstLevelBoundary.geometry, otherFirstLevelBoundary.geometry.Translate((float)firstLevelBoundaryDistance * firstLevelBoundary.normal));
+                    auto intersectionAndDifferenceGeoms = SplitFirstBoundaryInIntersectionAndDifference(firstLevelBoundary.netGeometry, otherFirstLevelBoundary.netGeometry.Translate((float)firstLevelBoundaryDistance * firstLevelBoundary.normal));
                     for (auto &secondLevelBoundaryGeom : SplitGeometryByContiguousAndCoplanarFaces(intersectionAndDifferenceGeoms.first))
                     {
                         auto area = secondLevelBoundaryGeom.Area();
@@ -351,8 +354,9 @@ namespace webifc::geometry
 
                         SecondLevelBoundary secondLevelBoundary;
                         secondLevelBoundary.id = secondLevelBoundaries.size();
-                        secondLevelBoundary.geometry = secondLevelBoundaryGeom;
-                        secondLevelBoundary.point = secondLevelBoundary.geometry.GetPoint(secondLevelBoundary.geometry.GetFace(0).i0);
+                        secondLevelBoundary.netGeometry = secondLevelBoundaryGeom;
+                        secondLevelBoundary.grossGeometry = secondLevelBoundary.netGeometry;
+                        secondLevelBoundary.point = secondLevelBoundary.netGeometry.GetPoint(secondLevelBoundary.netGeometry.GetFace(0).i0);
                         secondLevelBoundary.normal = firstLevelBoundary.normal;
                         secondLevelBoundary.buildingElement = buildingElement.id;
                         secondLevelBoundary.space = firstLevelBoundary.space;
@@ -361,9 +365,10 @@ namespace webifc::geometry
 
                         SecondLevelBoundary otherSecondLevelBoundary;
                         otherSecondLevelBoundary.id = secondLevelBoundaries.size();
-                        otherSecondLevelBoundary.geometry = secondLevelBoundary.geometry.Translate((float)firstLevelBoundaryDistance * otherFirstLevelBoundary.normal);
-                        otherSecondLevelBoundary.geometry.Flip();
-                        otherSecondLevelBoundary.point = otherSecondLevelBoundary.geometry.GetPoint(otherSecondLevelBoundary.geometry.GetFace(0).i0);
+                        otherSecondLevelBoundary.netGeometry = secondLevelBoundary.netGeometry.Translate((float)firstLevelBoundaryDistance * otherFirstLevelBoundary.normal);
+                        otherSecondLevelBoundary.netGeometry.Flip();
+                        otherSecondLevelBoundary.grossGeometry = otherSecondLevelBoundary.netGeometry;
+                        otherSecondLevelBoundary.point = otherSecondLevelBoundary.netGeometry.GetPoint(otherSecondLevelBoundary.netGeometry.GetFace(0).i0);
                         otherSecondLevelBoundary.normal = otherFirstLevelBoundary.normal;
                         otherSecondLevelBoundary.buildingElement = buildingElement.id;
                         otherSecondLevelBoundary.space = otherFirstLevelBoundary.space;
@@ -377,20 +382,21 @@ namespace webifc::geometry
                         }
                     }
 
-                    firstLevelBoundary.geometry = intersectionAndDifferenceGeoms.second;
-                    intersectionAndDifferenceGeoms = SplitFirstBoundaryInIntersectionAndDifference(otherFirstLevelBoundary.geometry, intersectionAndDifferenceGeoms.first.Translate((float)firstLevelBoundaryDistance * otherFirstLevelBoundary.normal));
-                    otherFirstLevelBoundary.geometry = intersectionAndDifferenceGeoms.second;
+                    firstLevelBoundary.netGeometry = intersectionAndDifferenceGeoms.second;
+                    intersectionAndDifferenceGeoms = SplitFirstBoundaryInIntersectionAndDifference(otherFirstLevelBoundary.netGeometry, intersectionAndDifferenceGeoms.first.Translate((float)firstLevelBoundaryDistance * otherFirstLevelBoundary.normal));
+                    otherFirstLevelBoundary.netGeometry = intersectionAndDifferenceGeoms.second;
 
-                    if (firstLevelBoundary.geometry.IsEmpty())
+                    if (firstLevelBoundary.netGeometry.IsEmpty())
                         break;
                 }
 
-                for (auto &secondLevelBoundaryGeom : SplitGeometryByContiguousAndCoplanarFaces(firstLevelBoundary.geometry))
+                for (auto &secondLevelBoundaryGeom : SplitGeometryByContiguousAndCoplanarFaces(firstLevelBoundary.netGeometry))
                 {
                     SecondLevelBoundary secondLevelBoundary;
                     secondLevelBoundary.id = secondLevelBoundaries.size();
-                    secondLevelBoundary.geometry = secondLevelBoundaryGeom;
-                    secondLevelBoundary.point = secondLevelBoundary.geometry.GetPoint(secondLevelBoundary.geometry.GetFace(0).i0);
+                    secondLevelBoundary.netGeometry = secondLevelBoundaryGeom;
+                    secondLevelBoundary.grossGeometry = secondLevelBoundary.netGeometry;
+                    secondLevelBoundary.point = secondLevelBoundary.netGeometry.GetPoint(secondLevelBoundary.netGeometry.GetFace(0).i0);
                     secondLevelBoundary.normal = firstLevelBoundary.normal;
                     secondLevelBoundary.buildingElement = buildingElement.id;
                     secondLevelBoundary.space = firstLevelBoundary.space;
@@ -597,7 +603,7 @@ namespace webifc::geometry
     {
         IfcCrossSections boundaryLoops;
 
-        auto boundaryPolygon = SplitGeometryInPolygons(boundary.geometry)[0];
+        auto boundaryPolygon = SplitGeometryInPolygons(boundary.netGeometry)[0];
         for (auto &polygonWire : boundaryPolygon.second)
         {
             IfcCurve curve;

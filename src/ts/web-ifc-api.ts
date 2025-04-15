@@ -957,7 +957,8 @@ export class IfcAPI {
         boundaryCallback: (
             space: number,
             buildingElement: string,
-            geometry: IfcGeometry,
+            netGeometry: IfcGeometry,
+            grossGeometry: IfcGeometry,
             boundaryCondition: string) => void,
         msgCallback: (msg: string) => void) {
         this.wasmModule.FindSpacesMesh(modelID, types, spaceCallback, boundaryCallback, msgCallback);

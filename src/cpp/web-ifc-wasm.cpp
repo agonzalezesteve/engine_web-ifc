@@ -175,13 +175,17 @@ void StreamAllMeshes(uint32_t modelID, emscripten::val callback)
 
 void RunBoundaryCallback(emscripten::val boundaryCallback, webifc::geometry::SecondLevelBoundary &secondLevelBoundary)
 {
-    webifc::geometry::IfcGeometry secondLevelBoundaryGeometry;
-    secondLevelBoundaryGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(secondLevelBoundary.geometry));
+    webifc::geometry::IfcGeometry secondLevelBoundaryNetGeometry;
+    secondLevelBoundaryNetGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(secondLevelBoundary.netGeometry));
+
+    webifc::geometry::IfcGeometry secondLevelBoundaryGrossGeometry;
+    secondLevelBoundaryGrossGeometry.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(secondLevelBoundary.grossGeometry));
 
     boundaryCallback(
         secondLevelBoundary.space,
         secondLevelBoundary.buildingElement,
-        secondLevelBoundaryGeometry,
+        secondLevelBoundaryNetGeometry,
+        secondLevelBoundaryGrossGeometry,
         secondLevelBoundary.boundaryConditionToString());
 }
 
