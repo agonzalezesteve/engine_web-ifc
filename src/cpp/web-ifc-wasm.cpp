@@ -196,41 +196,38 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
 
     auto loader = manager.GetIfcLoader(modelID);
 
-    std::vector<uint32_t> expressIds;
+    std::vector<uint32_t> buildingElementExpressIDs;
     for (size_t i = 0; i < typesVal["length"].as<size_t>(); i++)
     {
         emscripten::val typeVal = typesVal[std::to_string(i)];
         uint32_t type = typeVal.as<uint32_t>();
         auto typeExpressIds = loader->GetExpressIDsWithType(type);
 
-        expressIds.insert(expressIds.end(), typeExpressIds.begin(), typeExpressIds.end());
+        buildingElementExpressIDs.insert(buildingElementExpressIDs.end(), typeExpressIds.begin(), typeExpressIds.end());
     }
+    auto spaceExpressIds = loader->GetExpressIDsWithType(webifc::schema::IFCSPACE);
 
     auto geomLoader = manager.GetGeometryProcessor(modelID);
     auto relVoids = geomLoader->GetLoader().GetRelVoids();
     auto relElementAggregates = geomLoader->GetLoader().GetRelElementAggregates();
 
-    fuzzybools::Geometry unionGeom;
-
     msgCallback(std::string("buildingElements"));
     std::vector<webifc::geometry::BuildingElement> buildingElements;
-    for (auto &expressId : expressIds)
+    for (auto &buildingElementExpressID : buildingElementExpressIDs)
     {
-        auto buildingElementMesh = geomLoader->GetFlatMesh(expressId, true);
+        auto buildingElementMesh = geomLoader->GetFlatMesh(buildingElementExpressID, true);
 
         for (auto &buildingElementMeshGeom : buildingElementMesh.geometries)
         {
-            auto buildingElementGeom = geomLoader->GetGeometry(buildingElementMeshGeom.geometryExpressID).Transform(buildingElementMeshGeom.transformation);
+            auto transformedBuildingElementMeshGeom = geomLoader->GetGeometry(buildingElementMeshGeom.geometryExpressID).Transform(buildingElementMeshGeom.transformation);
 
             webifc::geometry::BuildingElement buildingElement;
-            buildingElement.id = expressId;
-            buildingElement.geometry = webifc::geometry::booleanManager::convertToEngine(buildingElementGeom);
+            buildingElement.id = buildingElementExpressID;
+            buildingElement.geometry = webifc::geometry::booleanManager::convertToEngine(transformedBuildingElementMeshGeom);
             buildingElements.push_back(buildingElement);
 
-            unionGeom = fuzzybools::Union(unionGeom, webifc::geometry::booleanManager::convertToEngine(buildingElementGeom));
-
-            auto relVoidsIt = relVoids.find(expressId);
-            auto relAggIt = relElementAggregates.find(expressId);
+            auto relVoidsIt = relVoids.find(buildingElementExpressID);
+            auto relAggIt = relElementAggregates.find(buildingElementExpressID);
 
             if (relAggIt != relElementAggregates.end() && !relAggIt->second.empty())
             {
@@ -275,19 +272,39 @@ void FindSpacesMesh(uint32_t modelID, emscripten::val typesVal, emscripten::val 
         }
     }
 
+    msgCallback(std::string("spaces"));
+
+    std::vector<webifc::geometry::SpaceOrBuilding> spacesAndBuildings;
+    for (uint32_t spaceExpressID : spaceExpressIds)
+    {
+        auto spaceMesh = geomLoader->GetFlatMesh(spaceExpressID, true);
+
+        fuzzybools::Geometry spaceGeometry;
+        for (auto &spaceMeshGeom : spaceMesh.geometries)
+        {
+            auto transformedSpaceMeshGeom =
+                geomLoader->GetGeometry(spaceMeshGeom.geometryExpressID)
+                         .Transform(spaceMeshGeom.transformation);
+
+            auto meshGeometry = webifc::geometry::booleanManager::convertToEngine(transformedSpaceMeshGeom);
+
+            spaceGeometry = fuzzybools::Union(spaceGeometry, meshGeometry);
+        }
+
+        webifc::geometry::SpaceOrBuilding space;
+        space.id = spacesAndBuildings.size();
+        space.geometry = spaceGeometry;
+        space.isSpace = true;
+        spacesAndBuildings.push_back(space);
+
+        webifc::geometry::IfcGeometry spaceGeom;
+        spaceGeom.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(space.geometry));
+        spaceCallback(spaceGeom, space.isSpace);
+    }
+
     geomLoader->Clear();
 
     auto spaceGenerator = webifc::geometry::IfcGeometrySpace();
-
-    msgCallback(std::string("spaces"));
-    auto spacesAndBuildings = spaceGenerator.GetSpacesAndBuildings(unionGeom);
-
-    for (auto &spaceOrBuilding : spacesAndBuildings)
-    {
-        webifc::geometry::IfcGeometry space;
-        space.AddGeometry(webifc::geometry::booleanManager::convertToWebIfc(spaceOrBuilding.geometry));
-        spaceCallback(space, spaceOrBuilding.isSpace);
-    }
 
     msgCallback(std::string("firstLevelBoundaries"));
     auto firstLevelBoundaries = spaceGenerator.GetFirstLevelBoundaries(buildingElements, spacesAndBuildings);
